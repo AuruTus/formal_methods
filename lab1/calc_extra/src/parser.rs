@@ -170,7 +170,7 @@ fn token_2_node<N: Numeric + 'static>(
     }
 }
 
-fn parse<N: Numeric + 'static>(tokens: Vec<Token<N>>) -> Option<Box<dyn Expr<N>>> {
+pub fn parse<N: Numeric + 'static>(tokens: Vec<Token<N>>) -> Option<Box<dyn Expr<N>>> {
     let mut lf_nds: Vec<Box<dyn Expr<N>>> = vec![];
     let mut non_lf_nds: Vec<Token<N>> = vec![];
     let mut root = Box::new(Root::new());
