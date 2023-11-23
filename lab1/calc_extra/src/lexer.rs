@@ -1,18 +1,32 @@
-use std::fmt;
-use std::ops::{Add, Div, Mul, Rem, Sub};
+pub use std::fmt;
+pub use std::ops::{Add, Div, Mul, Rem, Sub};
+
+pub trait Numeric:
+    PartialEq
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+    + Div<Output = Self>
+    + Rem<Output = Self>
+    + fmt::Debug
+    + Copy
+{
+}
+
+impl<T> Numeric for T where
+    T: PartialEq
+        + Add<Output = Self>
+        + Sub<Output = Self>
+        + Mul<Output = Self>
+        + Div<Output = Self>
+        + Rem<Output = Self>
+        + fmt::Debug
+        + Copy
+{
+}
 
 #[derive(Debug)]
-pub enum Token<T>
-where
-    T: PartialEq
-        + Add<Output = T>
-        + Sub<Output = T>
-        + Mul<Output = T>
-        + Div<Output = T>
-        + Rem<Output = T>
-        + fmt::Debug
-        + Copy,
-{
+pub enum Token<T: Numeric> {
     Num(T),
     Add,
     Minus,
@@ -22,73 +36,60 @@ where
     RightPar,
 }
 
-#[derive(PartialEq)]
-enum State {
-    Num,
-    Add,
-    Minus,
-    Multi,
-    Div,
-    LeftPar,
-    RightPar,
-}
-
-fn str_2_token(s: &String, state: &State) -> Token<i32> {
-    match &state {
-        State::Num => match s.parse::<i32>() {
-            Ok(n) => Token::Num(n),
-            _ => Token::Num(0),
-        },
-        _ => {
-            todo!()
-        }
+fn str_2_token(s: &String) -> Token<i32> {
+    match s.parse::<i32>() {
+        Ok(n) => Token::Num(n),
+        _ => Token::Num(0),
     }
 }
 
 pub fn lexer<S: Into<String>>(expr: S) -> Vec<Token<i32>> {
     let mut tokens = vec![];
     let mut curr = String::new();
-    let mut prev_state = State::Num;
+
+    let push_num = |curr: &mut String, tokens: &mut Vec<Token<i32>>| {
+        if curr.len() != 0 {
+            tokens.push(str_2_token(&curr));
+            *curr = String::new();
+        }
+    };
 
     for c in expr.into().chars() {
         match c {
             d @ '0'..='9' => {
-                if prev_state != State::Num {
-                    tokens.push(str_2_token(&curr, &prev_state));
-                    curr = String::new();
-                }
-                prev_state = State::Num;
                 curr.push(d);
             }
             '+' => {
-                prev_state = State::Add;
+                push_num(&mut curr, &mut tokens);
                 tokens.push(Token::Add);
             }
             '-' => {
-                prev_state = State::Minus;
+                push_num(&mut curr, &mut tokens);
                 tokens.push(Token::Minus);
             }
             '*' => {
-                prev_state = State::Multi;
+                push_num(&mut curr, &mut tokens);
                 tokens.push(Token::Multi);
             }
             '/' => {
-                prev_state = State::Div;
+                push_num(&mut curr, &mut tokens);
                 tokens.push(Token::Div);
             }
             '(' => {
-                prev_state = State::LeftPar;
+                push_num(&mut curr, &mut tokens);
                 tokens.push(Token::LeftPar);
             }
             ')' => {
-                prev_state = State::RightPar;
+                push_num(&mut curr, &mut tokens);
                 tokens.push(Token::RightPar);
             }
             _ => {
-                todo!()
+                push_num(&mut curr, &mut tokens);
+                println!("unimplemented char: {} ascii: {}", c, c as i32);
             }
         }
     }
+    push_num(&mut curr, &mut tokens);
     tokens
 }
 
@@ -97,6 +98,6 @@ mod test {
     use super::*;
     #[test]
     fn test_lexer() {
-        println!("{:#?}", lexer("123"))
+        println!("{:#?}", lexer("123 + * (((()"))
     }
 }
