@@ -27,7 +27,6 @@ class Num(Expr):
 class Add(Expr):
     left: Expr
     right: Expr
-
     def __str__(self):
         return f"{self.left} + {self.right}"
 
@@ -53,11 +52,18 @@ class Multi(Expr):
 # the unit tests 1&2.
 @dataclass
 class Div(Expr):
-    raise NotImplementedError('TODO: Your code here!') 
+    left: Expr
+    right: Expr
+
+    def __str__(self):
+        return f"{self.left} / {self.right}"
 
 @dataclass
 class Par(Expr):
-    raise NotImplementedError('TODO: Your code here!') 
+    inner: Expr
+    
+    def __str__(self):
+        return f"({self.inner})"
 
 
 
@@ -70,6 +76,14 @@ def eval_value(e: Expr) -> [int| float]:
             return value
         case Add(left, right):
             return eval_value(left) + eval_value(right)
+        case Minus(left, right):
+            return eval_value(left) - eval_value(right)
+        case Multi(left, right):
+            return eval_value(left) * eval_value(right)
+        case Div(left, right):
+            return eval_value(left) / eval_value(right)
+        case Par(inner):
+            return eval_value(inner)
     raise NotImplementedError('TODO: Your code here!') 
 
 # 3 * 4 + 10 / 2
