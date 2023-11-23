@@ -9,6 +9,7 @@ pub trait Numeric:
     + Div<Output = Self>
     + Rem<Output = Self>
     + fmt::Debug
+    + Default
     + Copy
 {
 }
@@ -21,11 +22,12 @@ impl<T> Numeric for T where
         + Div<Output = Self>
         + Rem<Output = Self>
         + fmt::Debug
+        + Default
         + Copy
 {
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token<T: Numeric> {
     Num(T),
     Add,
@@ -36,23 +38,41 @@ pub enum Token<T: Numeric> {
     RightPar,
 }
 
-fn str_2_token(s: &String) -> Token<i32> {
+impl<T: Numeric> Token<T> {
+    pub fn order(&self) -> i32 {
+        match self {
+            Self::Num(_) => 0,
+            Self::Add | Self::Minus => 1,
+            Self::Multi | Self::Div => 2,
+            Self::LeftPar | Self::RightPar => -1,
+        }
+    }
+}
+
+fn str_2_num_token(s: &String, sgn: i32) -> Token<i32> {
     match s.parse::<i32>() {
-        Ok(n) => Token::Num(n),
-        _ => Token::Num(0),
+        Ok(n) => Token::Num(sgn * n),
+        _ => {
+            panic!("invalid number string: {}", s);
+        }
     }
 }
 
 pub fn lexer<S: Into<String>>(expr: S) -> Vec<Token<i32>> {
     let mut tokens = vec![];
     let mut curr = String::new();
+    let mut par_cnt = 0;
+    let mut sgn: i32 = 1;
 
-    let push_num = |curr: &mut String, tokens: &mut Vec<Token<i32>>| {
-        if curr.len() != 0 {
-            tokens.push(str_2_token(&curr));
-            *curr = String::new();
+    macro_rules! push_num {
+        {} => {
+            if curr.len() != 0 {
+                tokens.push(str_2_num_token(&curr, sgn));
+                curr = String::new();
+                sgn = 1;
+            }
         }
-    };
+    }
 
     for c in expr.into().chars() {
         match c {
@@ -60,36 +80,60 @@ pub fn lexer<S: Into<String>>(expr: S) -> Vec<Token<i32>> {
                 curr.push(d);
             }
             '+' => {
-                push_num(&mut curr, &mut tokens);
+                push_num!();
                 tokens.push(Token::Add);
             }
             '-' => {
-                push_num(&mut curr, &mut tokens);
-                tokens.push(Token::Minus);
+                match tokens.last() {
+                    Some(t) => match t {
+                        Token::Num(_) => {
+                            push_num!();
+                            tokens.push(Token::Minus);
+                        }
+                        Token::LeftPar => {
+                            sgn = -1;
+                        }
+                        _ => {
+                            panic!("invalid op \"-\" position")
+                        }
+                    },
+                    None => {
+                        sgn = -1;
+                    }
+                };
             }
             '*' => {
-                push_num(&mut curr, &mut tokens);
+                push_num!();
                 tokens.push(Token::Multi);
             }
             '/' => {
-                push_num(&mut curr, &mut tokens);
+                push_num!();
                 tokens.push(Token::Div);
             }
             '(' => {
-                push_num(&mut curr, &mut tokens);
+                par_cnt += 1;
+                push_num!();
                 tokens.push(Token::LeftPar);
             }
             ')' => {
-                push_num(&mut curr, &mut tokens);
+                par_cnt -= 1;
+                push_num!();
                 tokens.push(Token::RightPar);
             }
+            ' ' => {
+                push_num!();
+            }
             _ => {
-                push_num(&mut curr, &mut tokens);
-                println!("unimplemented char: {} ascii: {}", c, c as i32);
+                panic!("unimplemented char: {} ascii: {}", c, c as i32)
             }
         }
     }
-    push_num(&mut curr, &mut tokens);
+    if curr.len() != 0 {
+        tokens.push(str_2_num_token(&curr, sgn));
+    }
+    if par_cnt != 0 {
+        panic!("invalid parenthesis pairs")
+    }
     tokens
 }
 
@@ -98,6 +142,12 @@ mod test {
     use super::*;
     #[test]
     fn test_lexer() {
-        println!("{:#?}", lexer("123 + * (((()"))
+        println!("{:#?}", lexer("123 + * ()"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_lexer_parenthesis_panic() {
+        lexer("1 + 2 + (((() + 3");
     }
 }
