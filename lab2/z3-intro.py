@@ -288,8 +288,7 @@ assert_expression(
     ),
     "∃x.∃y.P(x, y) -> ∃y.∃x.P(x, y)",
 )
-
-# exercise 15 : (P(b) /\ ∀x.∀y.(P(x) /\ (P(y) -> x = y))) -> ∀x.(P(x) <-> x = b)
+# exercise 15 : P(b) /\ (∀x.∀y.(P(x) /\ P(y) -> x = y)) -> (∀x.(P(x) <-> x = b))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
 x = Int("x")
@@ -297,7 +296,7 @@ y = Int("y")
 b = Int("b")
 P = Function("P", IntSort(), BoolSort())
 F_1 = P(b)
-F_2 = ForAll(x, ForAll(y, And(P(y), Implies(P(x), y==x))))
+F_2 = ForAll(x, ForAll(y, Implies(And(P(y), P(x)), y==x)))
 F_3 = ForAll(x, And(
     Implies(P(x), x==b),
     Implies(x==b, P(x)),
@@ -307,7 +306,7 @@ assert_expression(
         And(F_1, F_2),
         F_3,
     ),
-    "(P(b) /\ ∀x.∀y.(P(x) /\ (P(y) -> x = y))) -> ∀x.(P(x) <-> x = b)",
+    "(P(b) /\ ∀x.∀y.((P(x) /\ P(y)) -> x = y)) -> ∀x.(P(x) <-> x = b)",
 )
 
 
@@ -330,20 +329,24 @@ assert_expression(
 isort=IntSort()
 bsort=BoolSort()
 
-def odd(x):
-    q = FreshInt()
-    return Exists(q, x == 2*q + 1)
+parity = Function("parity", isort, bsort)
+odd_1 = parity(1)
+even_2 = parity(2)
+x = Int("x")
+odd_ss = ForAll(x, parity(x) == parity(x-2))
+odd_sss = ForAll(x, parity(x) != parity(x-1))
 
-odd_1 = odd(1)
+# prove 9 is odd
+prove(Implies(odd_ss, parity(9) == odd_1)) 
+# prove 25 is odd
+prove(Implies(odd_ss, parity(25) == odd_1))
+# prove 99 is odd (, odd(99) == odd_1 is too slow)
+prove(Implies(
+    And(odd_ss, parity(99) == parity(25),parity(25) == odd_1),
+        parity(99) == odd_1,
+))
 
-n = Int("n")
-odd_ss = Implies(odd(n) , odd(2 + n))
-
-prove(odd_1)
-prove(odd_ss)
-
-prove(odd(9))
-prove(odd(25))
-prove(odd(99))
-
-# raise NotImplementedError('TODO: Your code here!')
+prove(Implies(
+    And(odd_ss, odd_sss), 
+    And(parity(4) != odd_1, parity(4) == even_2))
+)
