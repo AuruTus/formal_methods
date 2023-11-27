@@ -17,7 +17,8 @@ def trans_pretty(expr, var_mapping=None, depth=0, top_level=True):
             new_var_mapping[f'Var({depth + i})'] = var
         body_str = trans_pretty(body, new_var_mapping, depth + num_vars, False)
         quantifier_str = "∀" if expr.is_forall() else "∃"
-        return f"{quantifier_str}{', '.join(bound_vars)}.{body_str}"
+        return f"{quantifier_str}{', '.join(bound_vars)}.({body_str})" if body_str.startswith("¬") and depth == 0 else \
+            f"{quantifier_str}{', '.join(bound_vars)}.{body_str}"
     elif is_iff(expr):
         left, right = expr.children()
         if is_implies(left) and is_implies(right) and is_implies_equivalent(left, right):
@@ -56,17 +57,19 @@ def trans_pretty(expr, var_mapping=None, depth=0, top_level=True):
             return f"({disjuncts_str})"
     elif is_not(expr):
         operand = expr.children()[0]
-        operand_str = trans_pretty(operand, var_mapping, depth, False)
+        operand_str = trans_pretty(operand, var_mapping, depth, False) if not isinstance(operand, QuantifierRef) else \
+            f"({trans_pretty(operand, var_mapping, depth, False)})"
         return f"¬{operand_str}"
     elif is_app(expr) and expr.num_args() > 0:
-        modified_mapping = {}
-        for i, arg in enumerate(expr.children()):
-            arg_str = trans_pretty(arg, var_mapping, depth)
-            modified_mapping[f'Var({i})'] = arg_str
-        var_mapping.update(modified_mapping)
+        decl_name = expr.decl().name()
+        if "=" == decl_name or "<" == decl_name or ">" == decl_name:
+            arg_1_str = trans_pretty(
+                expr.children()[0], var_mapping, depth, False)
+            arg_2_str = trans_pretty(
+                expr.children()[1], var_mapping, depth, False)
+            return f"{arg_1_str} {decl_name} {arg_2_str}"
         args_str = ", ".join(trans_pretty(arg, var_mapping, depth, False)
                              for arg in expr.children())
-        decl_name = expr.decl().name()
         return f"{decl_name}({args_str})"
     elif is_var(expr):
         var_name = var_mapping.get(str(expr), str(expr))
