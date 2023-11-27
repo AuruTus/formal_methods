@@ -47,6 +47,7 @@ pretty_print(F)
 
 
 def assert_expression(expr, expected: str):
+    prove(expr)
     if not isinstance(expr, str):
         expr = trans_pretty(expr)
     assert expr.lower().replace(' ', '') == expected.lower().replace(' ', ''), \
@@ -175,42 +176,139 @@ pretty_print(F)
 # exercise 8 : # ∀x.(¬P(x) /\ Q(x)) -> ∀x.(P(x) -> Q(x))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+
+x = Int("x")
+P = Function("P", IntSort(), BoolSort())
+Q = Function("Q", IntSort(), BoolSort())
+F_1 = ForAll(x, And(Not(P(x)), Q(x)))
+F_2 = ForAll(x, Implies(P(x), Q(x)))
+assert_expression(
+    Implies(F_1, F_2),
+    "∀x.(¬P(x) /\ Q(x)) -> ∀x.(P(x) -> Q(x))",
+)
 
 # exercise 9 : ∀x.(P(x) /\ Q(x)) <-> (∀x.P(x) /\ ∀x.Q(x))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+P = Function("P", IntSort(), BoolSort())
+Q = Function("Q", IntSort(), BoolSort())
+F_1 = ForAll(x, And(P(x), Q(x)))
+F_2 = ForAll(x, P(x))
+F_3 = ForAll(x, Q(x))
+assert_expression(
+    And(
+        Implies(F_1, And(F_2, F_3)),
+        Implies(And(F_2, F_3), F_1),
+    ),
+    "∀x.(P(x) /\ Q(x)) <-> (∀x.P(x) /\ ∀x.Q(x))",
+)
 
 # exercise 10 : ∃x.(¬P(x) \/ Q(x)) -> ∃x.(¬(P(x) /\ ¬Q(x)))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+P = Function("P", IntSort(), BoolSort())
+Q = Function("Q", IntSort(), BoolSort())
+F_1 = Exists(x, Or(Not(P(x)), Q(x)))
+F_2 = Exists(x, Not(And(P(x), Not(Q(x)))))
+assert_expression(
+    Implies(F_1, F_2),
+    "∃x.(¬P(x) \/ Q(x)) -> ∃x.(¬(P(x) /\ ¬Q(x)))",
+)
 
 # exercise 11 : ∃x.(P(x) \/ Q(x)) <-> (∃x.P(x) \/ ∃x.Q(x))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+P = Function("P", IntSort(), BoolSort())
+Q = Function("Q", IntSort(), BoolSort())
+F_1 = Exists(x, Or(P(x), Q(x)))
+F_2 = Exists(x, P(x))
+F_3 = Exists(x, Q(x))
+assert_expression(
+    And(
+        Implies(F_1, Or(F_2, F_3)),
+        Implies(Or(F_2, F_3), F_1),
+    ),
+    "∃x.(P(x) \/ Q(x)) <-> (∃x.P(x) \/ ∃x.Q(x))",
+)
 
 # exercise 12 : ∀x.(P(x) -> ¬Q(x)) -> ¬(∃x.(P(x) /\ Q(x)))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+P = Function("P", IntSort(), BoolSort())
+Q = Function("Q", IntSort(), BoolSort())
+F_1 = ForAll(x, Implies(P(x), Not(Q(x))))
+F_2 = Exists(x, And(P(x), Q(x)))
+assert_expression(
+    Implies(
+        F_1,
+        Not(F_2),
+    ),
+    "∀x.(P(x) -> ¬Q(x)) -> ¬(∃x.(P(x) /\ Q(x)))",
+)
 
-# exercise 13 : ∃x.(P(x) /\ Q(x)) /\ ∀x.(P(x) -> R(x)) -> ∃x.(R(x) /\ Q(x))
+
+# exercise 13 : (∃x.(P(x) /\ Q(x)) /\ ∀x.(P(x) -> R(x))) -> ∃x.(R(x) /\ Q(x))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+P = Function("P", IntSort(), BoolSort())
+Q = Function("Q", IntSort(), BoolSort())
+R = Function("R", IntSort(), BoolSort())
+F_1 = Exists(x, And(P(x), Q(x)))
+F_2 = ForAll(x, Implies(P(x), R(x)))
+F_3 = Exists(x, And(R(x), Q(x)))
+assert_expression(
+    Implies(
+        And(F_1, F_2),
+        F_3,
+    ),
+    "(∃x.(P(x) /\ Q(x)) /\ ∀x.(P(x) -> R(x))) -> ∃x.(R(x) /\ Q(x))",
+)
 
 # exercise 14 : ∃x.∃y.P(x, y) -> ∃y.∃x.P(x, y)
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+y = Int("y")
+P = Function("P", IntSort(), IntSort(), BoolSort())
+# !BUG(z3py): WTF the z3 treats the inner variable as Var{0} and the outer one as Var{1}
+# for z3:       var(1)          var(0)   P(var(0), var(1))
+#         Exists(x,        Exists(y, P(y, x)))
+# for our map   var(0)         var(1)
+# seems no z3 api for us to get the ast context for such continuous quantifier expression, sadly
+F_1 = Exists(x, Exists(y, P(y, x)))
+F_2 = Exists(y, Exists(x, P(y, x)))
+assert_expression(
+    Implies(
+        F_1, F_2,
+    ),
+    "∃x.∃y.P(x, y) -> ∃y.∃x.P(x, y)",
+)
 
-# exercise 15 : P(b) /\ (∀x.∀y.(P(x) /\ P(y) -> x = y)) -> (∀x.(P(x) <-> x = b))
+# exercise 15 : (P(b) /\ ∀x.∀y.(P(x) /\ (P(y) -> x = y))) -> ∀x.(P(x) <-> x = b)
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+x = Int("x")
+y = Int("y")
+b = Int("b")
+P = Function("P", IntSort(), BoolSort())
+F_1 = P(b)
+F_2 = ForAll(x, ForAll(y, And(P(y), Implies(P(x), y==x))))
+F_3 = ForAll(x, And(
+    Implies(P(x), x==b),
+    Implies(x==b, P(x)),
+))
+assert_expression(
+    Implies(
+        And(F_1, F_2),
+        F_3,
+    ),
+    "(P(b) /\ ∀x.∀y.(P(x) /\ (P(y) -> x = y))) -> ∀x.(P(x) <-> x = b)",
+)
 
 
 ################################################################
