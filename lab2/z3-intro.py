@@ -45,45 +45,104 @@ F = Or(P, Q)
 # Output is : P \/ Q
 pretty_print(F)
 
+
+def assert_expression(expr, expected: str):
+    if not isinstance(expr, str):
+        expr = trans_pretty(expr)
+    assert expr.lower().replace(' ', '') == expected.lower().replace(' ', ''), \
+        f"incorrect expression: {expr}, expected: {expected}"
+
 ################################################################
 ##                           Part A                           ##
 ################################################################
 
+
 # exercises 1 : P -> (Q -> P)
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-F = Implies(P, Implies(Q, P))
-trans_pretty(F)
+P, Q = Bools('P Q')
+assert_expression(
+    Implies(P, Implies(Q, P)),
+    "P -> (Q -> P)",
+)
 
 # exercise 2 : (P -> Q) -> ((Q -> R) -> (P -> R))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+P, Q, R = Bools("P Q R")
+assert_expression(
+    Implies(
+        Implies(P, Q),
+        Implies(Implies(Q, R), Implies(P, R))),
+    "(P -> Q) -> ((Q -> R) -> (P -> R))",
+)
 
 # exercise 3 : (P /\ (Q /\ R)) -> ((P /\ Q) /\ R)
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+P, Q, R = Bools("P Q R")
+assert_expression(
+    Implies(
+        And(P, And(Q, R)),
+        And(And(P, Q), R),
+    ),
+    "(P /\ (Q /\ R)) -> ((P /\ Q) /\ R)",
+)
 
 # exercise 4 : (P \/ (Q \/ R)) -> ((P \/ Q) \/ R)
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+P, Q, R = Bools("P Q R")
+assert_expression(
+    Implies(
+        Or(P, Or(Q, R)),
+        Or(Or(P, Q), R)
+    ),
+    "(P \/ (Q \/ R)) -> ((P \/ Q) \/ R)",
+)
 
 # exercise 5 : ((P -> R) /\ (Q -> R)) -> ((P /\ Q) -> R)
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+P, Q, R = Bools("P Q R")
+assert_expression(
+    Implies(
+        And(Implies(P, R), Implies(Q, R)),
+        Implies(And(P, Q), R)
+    ),
+    "((P -> R) /\ (Q -> R)) -> ((P /\ Q) -> R)"
+)
 
 # exercise 6 : ((P /\ Q) -> R) <-> (P -> (Q -> R))
 # Please use z3 to define the proposition.
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+P, Q, R = Bools("P Q R")
+assert_expression(
+    And(
+        Implies(
+            Implies(And(P, Q), R),
+            Implies(P, Implies(Q, R)),
+        ),
+        Implies(
+            Implies(P, Implies(Q, R)),
+            Implies(And(P, Q), R),
+        )
+    ),
+    "((P /\ Q) -> R) <-> (P -> (Q -> R))",
+)
+
 
 # exercise 7 : (P -> Q) -> (¬Q -> ¬P)
 # Please use z3 to define the proposition
 # Note that you need to define the proposition, and prove it.
-raise NotImplementedError('TODO: Your code here!')
+P, Q = Bools("P Q")
+assert_expression(
+    Implies(
+        Implies(P, Q),
+        Implies(Not(Q), Not(P)),
+    ),
+    "(P -> Q) -> (¬Q -> ¬P)",
+)
 
 
 ################################################################
@@ -96,18 +155,18 @@ raise NotImplementedError('TODO: Your code here!')
 # are given in Z3
 # IntSort(): Return the integer sort in the given context.
 # BoolSort(): Return the Boolean Z3 sort.
-isort = IntSort()
-bsort = BoolSort()
+isort=IntSort()
+bsort=BoolSort()
 
 # Declare a Int variable x
-x = Int('x')
+x=Int('x')
 
 # Declare a function P with input of isort type and output
 # of bsort type
-P = Function('P', isort, bsort)
+P=Function('P', isort, bsort)
 
 # It means ∃x.P(x)
-F = Exists(x, P(x))
+F=Exists(x, P(x))
 print(F)
 pretty_print(F)
 
@@ -170,7 +229,7 @@ raise NotImplementedError('TODO: Your code here!')
 # Please prove that integers 9, 25, and 99 are odd numbers.
 
 # declare sorts: isort and bsort
-isort = IntSort()
-bsort = BoolSort()
+isort=IntSort()
+bsort=BoolSort()
 
 raise NotImplementedError('TODO: Your code here!')

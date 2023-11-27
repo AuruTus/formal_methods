@@ -4,6 +4,7 @@ from z3 import *
 def pretty_print(expr):
     print(trans_pretty(expr))
 
+
 def trans_pretty(expr, var_mapping=None, depth=0, top_level=True):
     if var_mapping is None:
         var_mapping = {}
@@ -21,9 +22,11 @@ def trans_pretty(expr, var_mapping=None, depth=0, top_level=True):
         left, right = expr.children()
         if is_implies(left) and is_implies(right) and is_implies_equivalent(left, right):
             antecedent, consequent = left.children()
-            antecedent_str = trans_pretty(antecedent, var_mapping, depth, False)
-            consequent_str = trans_pretty(consequent, var_mapping, depth, False)
-            if(top_level == True):
+            antecedent_str = trans_pretty(
+                antecedent, var_mapping, depth, False)
+            consequent_str = trans_pretty(
+                consequent, var_mapping, depth, False)
+            if (top_level == True):
                 return f"{antecedent_str} <-> {consequent_str}"
             else:
                 return f"({antecedent_str} <-> {consequent_str})"
@@ -31,35 +34,38 @@ def trans_pretty(expr, var_mapping=None, depth=0, top_level=True):
         antecedent, consequent = expr.children()
         antecedent_str = trans_pretty(antecedent, var_mapping, depth, False)
         consequent_str = trans_pretty(consequent, var_mapping, depth, False)
-        if(top_level == True):
+        if (top_level == True):
             return f"{antecedent_str} -> {consequent_str}"
         else:
             return f"({antecedent_str} -> {consequent_str})"
     elif is_and(expr):
         conjuncts = expr.children()
-        conjuncts_str = " /\ ".join(trans_pretty(c, var_mapping, depth, False) for c in conjuncts)
-        if(top_level == True):    
+        conjuncts_str = " /\ ".join(trans_pretty(c,
+                                    var_mapping, depth, False) for c in conjuncts)
+        if (top_level == True):
             return f"{conjuncts_str}"
         else:
             return f"({conjuncts_str})"
     elif is_or(expr):
         disjuncts = expr.children()
-        disjuncts_str = " \/ ".join(trans_pretty(c, var_mapping, depth, False) for c in disjuncts)
-        if(top_level == True):    
+        disjuncts_str = " \/ ".join(trans_pretty(c,
+                                    var_mapping, depth, False) for c in disjuncts)
+        if (top_level == True):
             return f"{disjuncts_str}"
         else:
             return f"({disjuncts_str})"
     elif is_not(expr):
         operand = expr.children()[0]
         operand_str = trans_pretty(operand, var_mapping, depth, False)
-        return f"~{operand_str}"
+        return f"¬{operand_str}"
     elif is_app(expr) and expr.num_args() > 0:
         modified_mapping = {}
         for i, arg in enumerate(expr.children()):
             arg_str = trans_pretty(arg, var_mapping, depth)
             modified_mapping[f'Var({i})'] = arg_str
         var_mapping.update(modified_mapping)
-        args_str = ", ".join(trans_pretty(arg, var_mapping, depth, False) for arg in expr.children())
+        args_str = ", ".join(trans_pretty(arg, var_mapping, depth, False)
+                             for arg in expr.children())
         decl_name = expr.decl().name()
         return f"{decl_name}({args_str})"
     elif is_var(expr):
@@ -72,8 +78,9 @@ def trans_pretty(expr, var_mapping=None, depth=0, top_level=True):
 def is_implies_equivalent(impl1, impl2):
     antecedent1, consequent1 = impl1.children()
     antecedent2, consequent2 = impl2.children()
-    
+
     return antecedent1 == consequent2 and antecedent2 == consequent1
+
 
 def is_iff(expr):
     if is_and(expr):
@@ -82,4 +89,3 @@ def is_iff(expr):
             left, right = conjuncts
             return is_implies(left) and is_implies(right) and is_implies_equivalent(left, right)
     return False
-
