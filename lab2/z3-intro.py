@@ -330,4 +330,20 @@ assert_expression(
 isort=IntSort()
 bsort=BoolSort()
 
-raise NotImplementedError('TODO: Your code here!')
+def odd(x):
+    q = FreshInt()
+    return Exists(q, x == 2*q + 1)
+
+odd_1 = odd(1)
+
+n = Int("n")
+odd_ss = Implies(odd(n) , odd(2 + n))
+
+prove(odd_1)
+prove(odd_ss)
+
+prove(odd(9))
+prove(odd(25))
+prove(odd(99))
+
+# raise NotImplementedError('TODO: Your code here!')
