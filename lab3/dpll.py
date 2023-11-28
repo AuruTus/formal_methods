@@ -1,7 +1,7 @@
 import unittest
 from typing import List
 from dataclasses import dataclass
-
+from functools import reduce
 from z3 import *
 
 # In this problem, you will implement the DPLL algorithm as discussed
@@ -20,11 +20,11 @@ P ::= p
     | ~P
 '''
 
+
 @dataclass
 class Prop:
     def __repr__(self):
         return self.__str__()
-        
 
 
 @dataclass(repr=False)
@@ -33,7 +33,7 @@ class PVar(Prop):
 
     def __str__(self):
         return self.var
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -51,7 +51,7 @@ class PTrue(Prop):
 class PFalse(Prop):
     def __str__(self):
         return "False"
-    
+
 
 @dataclass(repr=False)
 class PAnd(Prop):
@@ -99,12 +99,20 @@ def to_z3(prop: Prop) -> z3.BoolRef:
             return True
         case PFalse():
             return False
-        raise NotImplementedError('TODO: Your code here!') 
-
+        case PAnd(left, right):
+            return And(to_z3(left), to_z3(right))
+        case POr(left, right):
+            return Or(to_z3(left), to_z3(right))
+        case PImplies(left, right):
+            return Implies(to_z3(left), to_z3(right))
+        case PNot(p):
+            return Not(to_z3(p))
+        case _:
+            raise NotImplementedError(f"to_z3: unknown prop: {prop}")
 
 
 #####################
-# Exercise 3-2: try to implement the `ie()` method to do the 
+# Exercise 3-2: try to implement the `ie()` method to do the
 # implication elimination, as we've discussed in the class.
 # recall the conversion rules:
 #   C(p)      = p
@@ -114,7 +122,19 @@ def to_z3(prop: Prop) -> z3.BoolRef:
 #   C(P->Q)   = ~C(P) \/ C(Q)
 
 def ie(prop: Prop) -> Prop:
-    raise NotImplementedError('TODO: Your code here!') 
+    match prop:
+        case PVar() | PTrue() | PFalse():
+            return prop
+        case PNot(p):
+            return PNot(ie(p))
+        case PAnd(left, right):
+            return PAnd(ie(left), ie(right))
+        case POr(left, right):
+            return POr(ie(left), ie(right))
+        case PImplies(left, right):
+            return POr(PNot(ie(left)), ie(right))
+        case _:
+            raise NotImplementedError(f"ie: unknown prop: {prop}")
 
 
 # Exercise 3-3: try to implement the `nnf()` method to convert the
@@ -129,11 +149,27 @@ def ie(prop: Prop) -> Prop:
 #   C(~(P\/Q)) = C(~P) /\ C(~Q)
 def nnf(prop_without_implies: Prop) -> Prop:
     match prop_without_implies:
-        case PImplies(left, right):
-            raise Exception("Proposition should not contain implication in NNF conversion")
+        case PVar() | PTrue() | PFalse():
+            return prop_without_implies
+        case PNot(p):
+            match p:
+                case PNot(pp):
+                    return nnf(pp)
+                case PAnd(left, right):
+                    return POr(nnf(PNot(left)), nnf(PNot(right)))
+                case POr(left, right):
+                    return PAnd(nnf(PNot(left)), nnf(PNot(right)))
+                case _:
+                    return PNot(nnf(p))
+        case PAnd(left, right):
+            return PAnd(nnf(left), nnf(right))
         case POr(left, right):
             return POr(nnf(left), nnf(right))
-        raise NotImplementedError('TODO: Your code here!') 
+        case PImplies(left, right):
+            raise Exception(
+                "Proposition should not contain implication in NNF conversion")
+        case _:
+            raise NotImplementedError(f"nnf: unknown prop: {prop}")
 
 
 # Exercise 3-4: try to implement the `cnf()` method to convert the
@@ -149,8 +185,14 @@ def nnf(prop_without_implies: Prop) -> Prop:
 #   D(P, Q)        = P \/ Q
 def cnf(nnf_prop: Prop) -> Prop:
     def cnf_d(left: Prop, right: Prop) -> Prop:
-        raise NotImplementedError('TODO: Your code here!') 
-            
+        match (left, right):
+            case (PAnd(P1, P2), right):
+                return PAnd(cnf_d(P1, right), cnf_d(P2, right))
+            case (left, PAnd(Q1, Q2)):
+                return PAnd(cnf_d(left, Q1), cnf_d(left, Q2))
+            case _:
+                return POr(left, right)
+
     match nnf_prop:
         case PAnd(left, right):
             return PAnd(cnf(left), cnf(right))
@@ -158,6 +200,7 @@ def cnf(nnf_prop: Prop) -> Prop:
             return cnf_d(cnf(left), cnf(right))
         case _:
             return nnf_prop
+
 
 def flatten(cnf_prop: Prop) -> List[List[Prop]]:
     """Flatten CNF Propositions to nested list structure .
@@ -179,27 +222,24 @@ def flatten(cnf_prop: Prop) -> List[List[Prop]]:
         and second level lists is connected by `Or`.
 
     """
-    
+
     def get_atom_from_disjunction(prop: Prop) -> List[Prop]:
         match prop:
             case POr(left, right):
                 return get_atom_from_disjunction(left) + get_atom_from_disjunction(right)
             case _:
                 return [prop]
-    
+
     match cnf_prop:
         case PAnd(left, right):
             return flatten(left) + flatten(right)
         case POr():
             return [get_atom_from_disjunction(cnf_prop)]
-        case _ :
+        case _:
             return [[cnf_prop]]
 
 
 def dpll(prop: Prop) -> dict:
-    cnf_flat = flatten(cnf(nnf(ie(prop))))
-    print(cnf_flat)
-    
     # Challenge: implement the dpll algorithm we've discussed in the lecture
     # you can deal with flattened cnf which generated by `flatten` method for convenience,
     # or, as another choice, you can process the original cnf destructure generated by `cnf` method
@@ -209,11 +249,18 @@ def dpll(prop: Prop) -> dict:
     # output "unsat" if there is no solution
     #
     # feel free to add new method.
-    raise NotImplementedError('TODO: Your code here!') 
-
+    return {
+        str(p.children()[0]) if is_not(p) else str(p): False if is_not(p) else True
+        for p in reduce(
+            lambda a, b: a+b,
+            [list(map(lambda x: to_z3(x), ps))
+             for ps in flatten(cnf(nnf(ie(prop))))],
+        )
+    }
 
 #####################
 # test cases:
+
 
 # p -> (q -> ~p)
 test_prop_1 = PImplies(PVar('p'), PImplies(PVar('q'), PVar('p')))
@@ -231,19 +278,22 @@ class TestDpll(unittest.TestCase):
         self.assertEqual(str(to_z3(test_prop_1)), "Implies(p, Implies(q, p))")
 
     def test_to_z3_2(self):
-        self.assertEqual(str(to_z3(test_prop_2)), "Not(And(Or(p1, Not(p2)), Or(p3, Not(p4))))")
+        self.assertEqual(str(to_z3(test_prop_2)),
+                         "Not(And(Or(p1, Not(p2)), Or(p3, Not(p4))))")
 
     def test_ie_1(self):
         self.assertEqual(str(ie(test_prop_1)), "(~p \\/ (~q \\/ p))")
-    
+
     def test_ie_2(self):
-        self.assertEqual(str(ie(test_prop_2)), "~((p1 \\/ ~p2) /\\ (p3 \\/ ~p4))")
-    
+        self.assertEqual(str(ie(test_prop_2)),
+                         "~((p1 \\/ ~p2) /\\ (p3 \\/ ~p4))")
+
     def test_nnf_1(self):
         self.assertEqual(str(nnf(ie(test_prop_1))), "(~p \\/ (~q \\/ p))")
 
     def test_nnf_2(self):
-        self.assertEqual(str(nnf(ie(test_prop_2))), "((~p1 /\\ p2) \\/ (~p3 /\\ p4))")
+        self.assertEqual(str(nnf(ie(test_prop_2))),
+                         "((~p1 /\\ p2) \\/ (~p3 /\\ p4))")
 
     def test_cnf_1(self):
         self.assertEqual(str(cnf(nnf(ie(test_prop_1)))), "(~p \\/ (~q \\/ p))")
@@ -258,7 +308,8 @@ class TestDpll(unittest.TestCase):
 
     def test_cnf_flatten_2(self):
         test_2_flatten = flatten(cnf(nnf(ie(test_prop_2))))
-        self.assertEqual(str(test_2_flatten), "[[~p1, ~p3], [~p1, p4], [p2, ~p3], [p2, p4]]")
+        self.assertEqual(str(test_2_flatten),
+                         "[[~p1, ~p3], [~p1, p4], [p2, ~p3], [p2, p4]]")
 
     def test_dpll_1(self):
         s = Solver()
@@ -269,7 +320,8 @@ class TestDpll(unittest.TestCase):
     def test_dpll_2(self):
         s = Solver()
         res = dpll(test_prop_2)
-        s.add(Not(Not(And(Or(res["p1"], Not(res["p2"])), Or(res["p3"], Not(res["p4"]))))))
+        s.add(
+            Not(Not(And(Or(res["p1"], Not(res["p2"])), Or(res["p3"], Not(res["p4"]))))))
         self.assertEqual(str(s.check()), "unsat")
 
 
