@@ -263,6 +263,7 @@ def sat_all(props, f):
         props {BoolRef} -- Proposition list
         f {Boolref} -- logical express that consist of props
     """
+    from functools import reduce
     tmp_f = f
     solver = Solver()
     solver.add(f)
@@ -278,11 +279,7 @@ def sat_all(props, f):
             else:
                 new_prop = Not(prop)
             block.append(new_prop)
-        p, p_rest = block[0], block[1:]
-        new_f = p
-        for pr in p_rest:
-            new_f = And(new_f, pr)
-        tmp_f = And(tmp_f, Not(new_f))
+        tmp_f = And(tmp_f, Not(reduce(lambda a, b: And(a, b), block)))
         solver.add(tmp_f)
 
     print("the given proposition: ", f)
