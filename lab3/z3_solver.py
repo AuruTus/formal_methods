@@ -57,19 +57,38 @@ F = And(P, Not(Q))
 # Then we use solve to find a model that satisfy the proposition
 solve(F)
 
+
+def try_solve(expected: str, *exprs: ExprRef):
+    print("----------------------------------------")
+    s = Solver()
+    s.add(*exprs)
+    match s.check():
+        case CheckSatResult(r=z3.Z3_L_TRUE):
+            print(f"solutions for {expected}: {s.model()}")
+        case CheckSatResult(r=z3.Z3_L_FALSE):
+            print(f"no solution for {expected}: {exprs}")
+        case _:
+            print(f"unknown for {expected}")
+    print("\n")
+
+
 ###########################################################
 # Now you have know the basic usage of using z3 to find the solution that
 # will satisfy a proposition.
 #
 # Exercise 1-1:
 # Try to find solution that satisfies proposition: (P /\ Q) \/ R
-raise NotImplementedError('TODO: Your code here!') 
+P = Bool("P")
+Q = Bool("Q")
+R = Bool("R")
+try_solve(
+    "(P /\ Q) \/ R",
+    Or(And(P, Q), R),
+)
 
 
 # Exercise 1-2:
 # Try to find solution that satisfies proposition: P \/ (Q \/ R)
-raise NotImplementedError('TODO: Your code here!') 
-
 
 
 ###########################################################
@@ -80,7 +99,8 @@ raise NotImplementedError('TODO: Your code here!')
 # F = P /\ ~P
 P = Bool('P')
 F = And(P, Not(P))
-solve(F)
+# solve(F)
+try_solve("P /\ ~P", F)
 
 # Z3 will output:
 # "no solution"
@@ -91,13 +111,30 @@ solve(F)
 # Exercise 1-3:
 # Consider proposition (P \/ Q) /\ (Q /\ R) /\ (P /\ ~R). Complete below src,
 # Z3 will show you that no solution can satisfy it.
-raise NotImplementedError('TODO: Your code here!') 
-
+P = Bool("P")
+Q = Bool("Q")
+R = Bool("R")
+F_1 = Or(P, Q)
+F_2 = And(Q, R)
+F_3 = And(P, Not(R))
+try_solve(
+    "(P \/ Q) /\ (Q /\ R) /\ (P /\ ~R)",
+    And(F_1, And(F_2, F_3)),
+)
 
 # Exercise 1-4
 # Try to solve proposition
 # (P /\ ~S /\ R) /\ (R /\ ( ~P \/ (S /\ ~Q)))
-raise NotImplementedError('TODO: Your code here!') 
+P = Bool("P")
+Q = Bool("Q")
+R = Bool("R")
+S = Bool("S")
+F_1 = And(P, And(Not(S), R))
+F_2 = And(R, Or(Not(P), And(S, Not(Q))))
+try_solve(
+    "(P /\ ~S /\ R) /\ (R /\ ( ~P \/ (S /\ ~Q)))",
+    And(F_1, F_2),
+)
 
 ###########################################################
 # You may notice that some problems in Exercise 1 has more than one solutions
@@ -159,8 +196,25 @@ solve(F)
 # Now you have know how to add constraint to solver to get different solutions
 # from z3. Try to get **all solutions** that satisfy the proposition in
 # Exercise 1-1: (P /\ Q) \/ R
-raise NotImplementedError('TODO: Your code here!') 
+print("-------------Exercise 1-5----------------")
+P, Q, R = Bools("P Q R")
+F = Or(And(P, Q), R)
+solve(F)
 
+
+F = And(F, Not(And(And(P, Q), Not(R))))
+solve(F)
+
+F = And(F, Not(And(And(P, Q), R)))
+solve(F)
+
+F = And(F, Not(And(And(Not(P), Not(Q)), R)))
+solve(F)
+
+F = And(F, Not(And(Not(And(P, Q)), R)))
+solve(F)
+
+print("\n")
 
 # We can automate the above process, for this, we should expose
 # more internal capability of Z3. Consider our first example again:
@@ -209,6 +263,7 @@ def sat_all(props, f):
         props {BoolRef} -- Proposition list
         f {Boolref} -- logical express that consist of props
     """
+    tmp_f = f
     solver = Solver()
     solver.add(f)
     result = []
@@ -218,15 +273,17 @@ def sat_all(props, f):
         block = []
         for prop in props:
             prop_is_true = m.eval(prop, model_completion=True)
-
             if prop_is_true:
                 new_prop = prop
             else:
                 new_prop = Not(prop)
-
             block.append(new_prop)
-
-        raise NotImplementedError('TODO: Your code here!') 
+        p, p_rest = block[0], block[1:]
+        new_f = p
+        for pr in p_rest:
+            new_f = And(new_f, pr)
+        tmp_f = And(tmp_f, Not(new_f))
+        solver.add(tmp_f)
 
     print("the given proposition: ", f)
     print("the number of solutions: ", len(result))
@@ -238,6 +295,7 @@ def sat_all(props, f):
         print_model(m)
 
 
+print("-------------Exercise 1-6------------------")
 # If you complete the function. Try to use it for below props.
 sat_all([P, Q], Or(P, Q))
 sat_all([P], Implies(P, P))
