@@ -19,16 +19,47 @@ from z3 import *
 # for F and Not(F).
 # And then make sure that both F and Not(F) can be satisfied.
 # First we convert it into proposition
+
+
 def circuit_layout():
+    def _sat_all(props: list[ExprRef], f: ExprRef) -> int:
+        from functools import reduce
+        tmp_f = f
+        solver = Solver()
+        solver.add(f)
+        result = []
+        while solver.check() == sat:
+            m = solver.model()
+            result.append(m)
+            block = []
+            for prop in props:
+                prop_is_true = m.eval(prop, model_completion=True)
+                if prop_is_true:
+                    new_prop = prop
+                else:
+                    new_prop = Not(prop)
+                block.append(new_prop)
+            tmp_f = And(tmp_f, Not(reduce(lambda a, b: And(a, b), block)))
+            solver.add(tmp_f)
+        return len(result)
+
+    def _assert_solution_number(props: list[ExprRef], f: ExprRef, expected: int, error: str):
+        assert _sat_all(props, f) == expected, error
+
     a, b, c, d = Bools('a b c d')
-    raise NotImplementedError('TODO: Your code here!') 
+    A_B = And(a, b)
+    A_B_D = And(A_B, d)
+    NC = Not(c)
+    A_B_NC = And(A_B, NC)
+    F = Or(A_B_D, A_B_NC)
+
+    _assert_solution_number([a, b, c, d], F, 3, "wrong solution number for F")
+    _assert_solution_number([a, b, c, d], Not(F), 13,
+                            "wrong solution number for Not(F)")
+
+    print("assertion succeededs")
 
 
 if __name__ == '__main__':
     # circuit_layout should have 3 solutions for F and 13 solutions for Not(F)
     circuit_layout()
-
-
-
-
-
