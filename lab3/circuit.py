@@ -22,29 +22,10 @@ from z3 import *
 
 
 def circuit_layout():
-    def _sat_all(props: list[ExprRef], f: ExprRef) -> int:
-        from functools import reduce
-        tmp_f = f
-        solver = Solver()
-        solver.add(f)
-        result = []
-        while solver.check() == sat:
-            m = solver.model()
-            result.append(m)
-            block = []
-            for prop in props:
-                prop_is_true = m.eval(prop, model_completion=True)
-                if prop_is_true:
-                    new_prop = prop
-                else:
-                    new_prop = Not(prop)
-                block.append(new_prop)
-            tmp_f = And(tmp_f, Not(reduce(lambda a, b: And(a, b), block)))
-            solver.add(tmp_f)
-        return len(result)
+    from z3_solver import _sat_all
 
     def _assert_solution_number(props: list[ExprRef], f: ExprRef, expected: int, error: str):
-        assert _sat_all(props, f) == expected, error
+        assert len(_sat_all(props, f)) == expected, error
 
     a, b, c, d = Bools('a b c d')
     A_B = And(a, b)

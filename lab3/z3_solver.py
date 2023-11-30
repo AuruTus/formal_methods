@@ -253,18 +253,11 @@ print(solver.check())
 print(solver.model())
 
 
-# Exercise 1-6
-# Now it's your turn, let's wrap all these facility into a nice function:
-# Read and understand the src, then complete the lost part.
-def sat_all(props, f):
-    """Get all solutions of given proposition set props that satisfy f
-
-    Arguments:
-        props {BoolRef} -- Proposition list
-        f {Boolref} -- logical express that consist of props
-    """
+def _sat_all(props: list[ExprRef], f: ExprRef) -> list:
     from functools import reduce
-    tmp_f = f
+    from copy import deepcopy
+
+    f = deepcopy(f)
     solver = Solver()
     solver.add(f)
     result = []
@@ -279,9 +272,23 @@ def sat_all(props, f):
             else:
                 new_prop = Not(prop)
             block.append(new_prop)
-        tmp_f = And(tmp_f, Not(reduce(lambda a, b: And(a, b), block)))
-        solver.add(tmp_f)
+        f = And(f, Not(reduce(lambda a, b: And(a, b), block)))
+        solver.add(f)
+    return result
 
+# Exercise 1-6
+# Now it's your turn, let's wrap all these facility into a nice function:
+# Read and understand the src, then complete the lost part.
+
+
+def sat_all(props, f):
+    """Get all solutions of given proposition set props that satisfy f
+
+    Arguments:
+        props {BoolRef} -- Proposition list
+        f {Boolref} -- logical express that consist of props
+    """
+    result = _sat_all(props, f)
     print("the given proposition: ", f)
     print("the number of solutions: ", len(result))
 
