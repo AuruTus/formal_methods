@@ -99,7 +99,7 @@ def four_queen():
     count = 0
     while solver.check() == sat:
         m = solver.model()
-        print(m)
+        # print(m)
         count += 1
         block = []
         for i in range(N):
