@@ -43,19 +43,29 @@ def seat_arrangement():
 
     # Exercise 5-1: try to add constraints that indicate Bob must take a seat
     # bob must take a seat:
-    raise NotImplementedError('TODO: Your code here!') 
+    bob_take_seat_1 = And(b1, Not(b2), Not(b3), Not(a1), Not(c1))
+    bob_take_seat_2 = And(Not(b1), b2, Not(b3), Not(a2), Not(c2))
+    bob_take_seat_3 = And(Not(b1), Not(b2), b3, Not(a3), Not(c3))
+    solver.add(Or(bob_take_seat_1, bob_take_seat_2, bob_take_seat_3))
 
     # Exercise 5-2: try to add constraints that indicate Carol must take a seat
     # carol must take a seat:
-    raise NotImplementedError('TODO: Your code here!') 
+    carol_take_seat_1 = And(c1, Not(c2), Not(c3), Not(a1), Not(b1))
+    carol_take_seat_2 = And(Not(c1), c2, Not(c3), Not(a2), Not(b2))
+    carol_take_seat_3 = And(Not(c1), Not(c2), c3, Not(a3), Not(b3))
+    solver.add(Or(carol_take_seat_1, carol_take_seat_2, carol_take_seat_3))
 
     # alice can not sit near to carol:
-    alice_not_near_carol = And(Implies(a1, Not(c2)), Implies(a2, Not(Or(c1, c3))), Implies(a3, Not(c2)))
+    alice_not_near_carol = And(Implies(a1, Not(c2)), Implies(
+        a2, Not(Or(c1, c3))), Implies(a3, Not(c2)))
     solver.add(alice_not_near_carol)
 
     # Exercise 5-3: try to add constraints that indicate Bob can not sit right to Alice
     # bob can not sit right to Alice
-    raise NotImplementedError('TODO: Your code here!') 
+    bob_not_sit_right_to_alice = And(
+        Implies(a1, Not(b2)), Implies(a2, Not(b3))
+    )
+    solver.add(bob_not_sit_right_to_alice)
 
     # Hint: here only one solution is printed, you may change this to
     # print all the solutions to check your implementation.
@@ -81,6 +91,7 @@ def seat_arrangement():
         print("Bob", end='')
     if model.evaluate(c3):
         print("Carol", end='')
+    print("\n")
 
 
 if __name__ == '__main__':
