@@ -55,5 +55,5 @@ where
 }
 
 fn main() {
-    n_queen::<32>();
+    n_queen::<16>();
 }
