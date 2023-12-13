@@ -1,0 +1,13 @@
+
+^Cnumber of result:  6226
+^CException ignored in: <function Solver.__del__ at 0x7f622e744820>
+Traceback (most recent call last):
+  File "/home/aurutus/.local/lib/python3.10/site-packages/z3/z3.py", line 6910, in __del__
+    Z3_solver_dec_ref(self.ctx.ref(), self.solver)
+  File "/home/aurutus/.local/lib/python3.10/site-packages/z3/z3core.py", line 4032, in Z3_solver_dec_ref
+    _elems.f(a0, a1)
+KeyboardInterrupt: 
+
+real    294m55.133s
+user    294m50.323s
+sys     0m3.940s
