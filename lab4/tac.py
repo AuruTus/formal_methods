@@ -209,6 +209,14 @@ if __name__ == '__main__':
     #   return z;
     # }
     pp_func(test_case)
+    assert _pp_func(test_case) == '''f(s1, s2, t1, t2){
+    a = s1 + t1;
+    b = s2 + t2;
+    c = a * b;
+    b = c * s1;
+    z = b;
+    return z;
+}'''
 
     ssa = to_ssa_func(test_case)
     # should print:
@@ -221,9 +229,16 @@ if __name__ == '__main__':
     #   return _tac_f_4;
     # }
     pp_func(ssa)
+    assert _pp_func(ssa) == '''f(s1, s2, t1, t2){
+    _tac_f_0 = s1 + t1;
+    _tac_f_1 = s2 + t2;
+    _tac_f_2 = _tac_f_0 * _tac_f_1;
+    _tac_f_3 = _tac_f_2 * s1;
+    _tac_f_4 = _tac_f_3;
+    return _tac_f_4;
+}'''
 
     cons = gen_cons_func(ssa)
-
     # should has constraints:
     # [_tac_f_0 == f_add(s1, t1),
     #  _tac_f_1 == f_add(s2, t2),
@@ -231,3 +246,8 @@ if __name__ == '__main__':
     #  _tac_f_3 == f_mul(_tac_f_2, s1),
     #  _tac_f_4 == _tac_f_3]
     print(cons)
+    assert str(cons) == "[_tac_f_0 == f_add(s1, t1), " + \
+                        "_tac_f_1 == f_add(s2, t2), " + \
+                        "_tac_f_2 == f_mul(_tac_f_0, _tac_f_1), " + \
+                        "_tac_f_3 == f_mul(_tac_f_2, s1), " + \
+                        "_tac_f_4 == _tac_f_3]"
