@@ -101,7 +101,8 @@ def pp_func(f: Function) -> str:
         case Function(name, args, stms, ret):
             f_name = name
             f_args = ", ".join(args)
-            f_stmt = "; ".join(map(lambda s: pp_stm(s), stms)) + "; "
+            f_stmt = "; ".join(map(lambda s: pp_stm(s), stms)
+                               ) + "; " if len(stms) > 0 else ""
             f_ret = "return " + pp_exp(ret) + ";"
             return f_name + "(" + f_args + ")" + "{" + f_stmt + f_ret + "}"
 

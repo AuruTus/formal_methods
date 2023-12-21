@@ -15,12 +15,18 @@ F ::= f(x1, ..., xn){S;* return x;}
 """
 
 # expression
+
+
 @dataclass
 class Exp:
     pass
+
+
 @dataclass
 class ExpVar(Exp):
     x: str
+
+
 @dataclass
 class ExpBop(Exp):
     x: str
@@ -28,15 +34,21 @@ class ExpBop(Exp):
     bop: str
 
 # statement
+
+
 @dataclass
 class Stm:
     pass
+
+
 @dataclass
 class StmAssign(Stm):
     x: str
     e: Exp
 
 # function:
+
+
 @dataclass
 class Function:
     name: str
@@ -46,14 +58,31 @@ class Function:
 
 ###############################################
 # pretty printer
+
+
 def pp_exp(e: Exp):
-    raise NotImplementedError('TODO: Your code here!') 
+    raise NotImplementedError('TODO: Your code here!')
+
 
 def pp_stm(s: Stm):
-    raise NotImplementedError('TODO: Your code here!') 
+    '''
+    S ::= x=y | x=y+z | x=y-z | x=y*z | x=y/z
+    '''
+    raise NotImplementedError('TODO: Your code here!')
 
-def pp_func(f: Function):
-    raise NotImplementedError('TODO: Your code here!') 
+
+def pp_func(f: Function) -> str:
+    '''
+    F ::= f(x1, ..., xn){S;* return x;}
+    '''
+    match f:
+        case Function(name, args, stms, ret):
+            f_name = name
+            f_args = ", ".join(args)
+            f_stmt = "; ".join(map(lambda s: pp_stm(s), stms)
+                               ) + "; " if len(stms) > 0 else ""
+            f_ret = "return " + pp_exp(ret) + ";"
+            return f_name + "(" + f_args + ")" + "{" + f_stmt + f_ret + "}"
 
 
 ###############################################
@@ -62,10 +91,12 @@ def pp_func(f: Function):
 # Exercise 7: Finish the SSA conversion function `to_ssa_stmt()`
 # take a function 'f', convert it to SSA
 def to_ssa_exp(e: Exp, var_map, fresh_var) -> Exp:
-    raise NotImplementedError('TODO: Your code here!') 
+    raise NotImplementedError('TODO: Your code here!')
+
 
 def to_ssa_stm(s: Stm, var_map, fresh_var) -> Stm:
-    raise NotImplementedError('TODO: Your code here!') 
+    raise NotImplementedError('TODO: Your code here!')
+
 
 def to_ssa_func(f: Function) -> Function:
     var_map = {arg: arg for arg in f.args}
@@ -75,26 +106,24 @@ def to_ssa_func(f: Function) -> Function:
                     f.args,
                     new_stmts,
                     var_map[f.ret])
-    
-
-    
 
 
 ###############################################
-# Exercise 8-1: Finished the `gen_cons_stmt` function to generate 
+# Exercise 8-1: Finished the `gen_cons_stmt` function to generate
 # constraints form TAC statements
 # Generate Z3 constraints:
 def gen_con_exp(e: Exp) -> BoolRef:
-    raise NotImplementedError('TODO: Your code here!') 
+    raise NotImplementedError('TODO: Your code here!')
+
 
 def gen_cons_stm(s: Stm) -> BoolRef:
-    raise NotImplementedError('TODO: Your code here!') 
+    raise NotImplementedError('TODO: Your code here!')
 
 
-# Exercise 8-2: Finished the `gen_cons_stmt` function to 
-# generate constraints form TAC function 
+# Exercise 8-2: Finished the `gen_cons_stmt` function to
+# generate constraints form TAC function
 def gen_cons_func(func: Function) -> List[BoolRef]:
-    raise NotImplementedError('TODO: Your code here!') 
+    raise NotImplementedError('TODO: Your code here!')
 
 
 ###############################################
@@ -111,7 +140,7 @@ test_case = Function('f',
 
 
 if __name__ == '__main__':
-    # should print: 
+    # should print:
     # f(s1, s2, t1, t2){
     #   a = s1 + t1;
     #   b = s2 + t2;
@@ -121,7 +150,7 @@ if __name__ == '__main__':
     #   return z;
     # }
     pp_func(test_case)
-    
+
     ssa = to_ssa_func(test_case)
     # should print:
     # f(s1, s2, t1, t2){
@@ -133,9 +162,9 @@ if __name__ == '__main__':
     #   return _tac_f_4;
     # }
     pp_func(ssa)
-    
+
     cons = gen_cons_func(ssa)
-    
+
     # should has constraints:
     # [_tac_f_0 == f_add(s1, t1),
     #  _tac_f_1 == f_add(s2, t2),
