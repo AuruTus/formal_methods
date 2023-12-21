@@ -60,29 +60,51 @@ class Function:
 # pretty printer
 
 
-def pp_exp(e: Exp):
-    raise NotImplementedError('TODO: Your code here!')
+def _pp_exp(e: Exp | str) -> str:
+    def _pp_bop(op: str) -> str:
+        match op:
+            case "+" | "-" | "*" | "/":
+                return op
+            case _:
+                raise NotImplementedError(f"unsupported binary operator {op}")
+    match e:
+        case str(_):
+            return e
+        case ExpVar(var):
+            return var
+        case ExpBop(left, right, bop):
+            return _pp_exp(left) + " " + _pp_bop(bop) + " " + _pp_exp(right)
+        case _:
+            raise NotImplementedError(
+                f"unsupported expression type {type(e)}: {e}")
 
 
-def pp_stm(s: Stm):
+def _pp_stm(s: Stm) -> str:
     '''
     S ::= x=y | x=y+z | x=y-z | x=y*z | x=y/z
     '''
-    raise NotImplementedError('TODO: Your code here!')
+    match s:
+        case StmAssign(x, e):
+            return x + " = " + _pp_exp(e)
 
 
-def pp_func(f: Function) -> str:
+def _pp_func(f: Function) -> str:
     '''
     F ::= f(x1, ..., xn){S;* return x;}
     '''
+    INDENT = "    "
     match f:
         case Function(name, args, stms, ret):
             f_name = name
             f_args = ", ".join(args)
-            f_stmt = "; ".join(map(lambda s: pp_stm(s), stms)
-                               ) + "; " if len(stms) > 0 else ""
-            f_ret = "return " + pp_exp(ret) + ";"
-            return f_name + "(" + f_args + ")" + "{" + f_stmt + f_ret + "}"
+            f_stmt = ";\n".join(map(lambda s: INDENT + _pp_stm(s), stms)
+                                ) + ";\n" if len(stms) > 0 else ""
+            f_ret = INDENT + "return " + _pp_exp(ret) + ";\n"
+            return f_name + "(" + f_args + ")" + "{\n" + f_stmt + f_ret + "}"
+
+
+def pp_func(f: Function):
+    print(_pp_func(f))
 
 
 ###############################################
@@ -90,12 +112,23 @@ def pp_func(f: Function) -> str:
 
 # Exercise 7: Finish the SSA conversion function `to_ssa_stmt()`
 # take a function 'f', convert it to SSA
-def to_ssa_exp(e: Exp, var_map, fresh_var) -> Exp:
-    raise NotImplementedError('TODO: Your code here!')
+def to_ssa_exp(e: Exp, var_map) -> Exp:
+    match e:
+        case ExpVar(x):
+            return ExpVar(var_map[x])
+        case ExpBop(left, right, bop):
+            return ExpBop(var_map[left],
+                          var_map[right],
+                          bop)
 
 
 def to_ssa_stm(s: Stm, var_map, fresh_var) -> Stm:
-    raise NotImplementedError('TODO: Your code here!')
+    match s:
+        case StmAssign(x, e):
+            new_exp = to_ssa_exp(e, var_map)
+            new_var = next(fresh_var)
+            var_map[x] = new_var
+            return StmAssign(new_var, new_exp)
 
 
 def to_ssa_func(f: Function) -> Function:
@@ -112,18 +145,44 @@ def to_ssa_func(f: Function) -> Function:
 # Exercise 8-1: Finished the `gen_cons_stmt` function to generate
 # constraints form TAC statements
 # Generate Z3 constraints:
-def gen_con_exp(e: Exp) -> BoolRef:
-    raise NotImplementedError('TODO: Your code here!')
+def gen_cons_exp(e: Exp | str) -> BoolRef:
+    def gen_cons_bop(op: str):
+        match op:
+            case "+":
+                return "add"
+            case "-":
+                return "minus"
+            case "*":
+                return "mul"
+            case "/":
+                return "div"
+            case _:
+                raise NotImplementedError(f"Unsupported binary operator {op}")
+    match e:
+        case str(_):
+            return Const(e, DeclareSort('S'))
+        case ExpVar(var):
+            return Const(var, DeclareSort('S'))
+        case ExpBop(left, right, bop):
+            func_name = "f_" + gen_cons_bop(bop)
+            left = gen_cons_exp(left)
+            right = gen_cons_exp(right)
+            return z3.Function(func_name,
+                               DeclareSort('S'),
+                               DeclareSort('S'),
+                               DeclareSort('S')).__call__(left, right)
 
 
 def gen_cons_stm(s: Stm) -> BoolRef:
-    raise NotImplementedError('TODO: Your code here!')
+    match s:
+        case StmAssign(x, e):
+            return Const(x, DeclareSort('S')).__eq__(gen_cons_exp(e))
 
 
 # Exercise 8-2: Finished the `gen_cons_stmt` function to
 # generate constraints form TAC function
 def gen_cons_func(func: Function) -> List[BoolRef]:
-    raise NotImplementedError('TODO: Your code here!')
+    return [gen_cons_stm(stm) for stm in func.stms]
 
 
 ###############################################
