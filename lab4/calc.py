@@ -21,9 +21,13 @@ F   ::= f(x1, ..., xn){S;* return E;}
 @dataclass
 class Exp:
     pass
+
+
 @dataclass
 class ExpVar(Exp):
     var: str
+
+
 @dataclass
 class ExpBop(Exp):
     left: Exp
@@ -31,15 +35,21 @@ class ExpBop(Exp):
     bop: str    # "+", "-", "*", "/"
 
 # statement
+
+
 @dataclass
 class Stm:
     pass
+
+
 @dataclass
 class StmAssign(Stm):
     var: str
     exp: Exp
 
 # function:
+
+
 @dataclass
 class Function:
     name: str
@@ -49,20 +59,55 @@ class Function:
 
 ###############################################
 # to pretty print a program
-def pp_exp(e: Exp):
-    raise NotImplementedError('TODO: Your code here!') 
 
-def pp_stm(s: Stm):
-    raise NotImplementedError('TODO: Your code here!') 
 
-def pp_func(f):
+def pp_bop(op: str) -> str:
+    match op:
+        case "+" | "-" | "*" | "/":
+            return op
+        case _:
+            raise NotImplementedError(f"unsupported binary operator {op}")
+
+
+def pp_exp(e: Exp) -> str:
+    '''
+    E   ::= x | E bop E
+    '''
+    match e:
+        case ExpVar(var):
+            return var
+        case ExpBop(left, right, bop):
+            return pp_exp(left) + pp_bop(bop) + pp_exp(right)
+        case _:
+            raise NotImplementedError(f"unsupported expression type {type(e)}")
+
+
+def pp_stm(s: Stm) -> str:
+    '''
+    S   ::= x=E
+    '''
+    match s:
+        case StmAssign(var, exp):
+            return var + "=" + pp_exp(exp)
+        case _:
+            raise NotImplementedError(f"unsupported statement type {type(s)}")
+
+
+def pp_func(f: Function) -> str:
+    '''
+    F   ::= f(x1, ..., xn){S;* return E;}
+    '''
     match f:
         case Function(name, args, stms, ret):
-            raise NotImplementedError('TODO: Your code here!') 
+            f_name = f"{name}"
+            f_args = ", ".join(args)
+            f_stmt = "; ".join(map(lambda s: pp_stm(s), stms)) + "; "
+            f_ret = "return " + pp_exp(ret) + ";"
+            return f_name + "(" + f_args + ")" + "{" + f_stmt + f_ret + "}"
+
 
 def pp(f: Function):
-    pp_func(f)
-
+    print(pp_func(f))
 
 
 ###############################################
@@ -78,6 +123,8 @@ def to_ssa_exp(exp: Exp, var_map) -> Exp:
                           bop)
 
 # convert statement:
+
+
 def to_ssa_stm(s: Stm, var_map, fresh_var) -> Stm:
     match s:
         case StmAssign(x, e):
@@ -87,6 +134,8 @@ def to_ssa_stm(s: Stm, var_map, fresh_var) -> Stm:
             return StmAssign(new_var, new_exp)
 
 # take a function 'func', convert it to SSA
+
+
 def to_ssa_func(f: Function) -> Function:
     # a map from variable to new variable:
     # init it by putting every argument into the map
@@ -118,6 +167,8 @@ def gen_cons_exp(exp: Exp) -> BoolRef:
                                DeclareSort('S')).__call__(left, right)
 
 # generate constraint for statements:
+
+
 def gen_cons_stm(s: Stm) -> BoolRef:
     match s:
         case StmAssign(x, e):
@@ -135,18 +186,18 @@ def gen_cons_func(f) -> List[BoolRef]:
 sample_f = Function('f',
                     ['s1', 's2', 't1', 't2'],
                     [StmAssign('z', ExpBop(ExpBop(ExpVar('s1'), ExpVar('t1'), "+"),
-                                                      ExpBop(ExpVar('s2'), ExpVar('t2'), "+"),
-                                                      "*")),
+                                           ExpBop(ExpVar('s2'),
+                                                  ExpVar('t2'), "+"),
+                                           "*")),
                      StmAssign('z', ExpBop(ExpVar('z'), ExpVar('s1'), "*"))],
                     ExpVar('z'))
 
 if __name__ == '__main__':
     # print the original program
-    pp_func(sample_f)
+    pp(sample_f)
     # convert the program to SSA
     new_f = to_ssa_func(sample_f)
     # print the converted program
-    pp_func(new_f)
+    pp(new_f)
     # generate and print Z3 constraints
     print(gen_cons_func(new_f))
-
