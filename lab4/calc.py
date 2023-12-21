@@ -99,7 +99,7 @@ def pp_func(f: Function) -> str:
     '''
     match f:
         case Function(name, args, stms, ret):
-            f_name = f"{name}"
+            f_name = name
             f_args = ", ".join(args)
             f_stmt = "; ".join(map(lambda s: pp_stm(s), stms)) + "; "
             f_ret = "return " + pp_exp(ret) + ";"
