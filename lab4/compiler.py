@@ -14,21 +14,50 @@ def compile_func(f: calc.Function) -> tac.Function:
     tac_stms = []
     fresh_var = counter(f"tmp_{f.name}")
 
-    # Exercise 9: Finish the compiler implementation by filling in the 
+    # Exercise 9: Finish the compiler implementation by filling in the
     # missing code in compile_exp()
-    def compile_exp(e: calc.Exp) -> str:
-        raise NotImplementedError('TODO: Your code here!') 
+    def compile_return_exp(e: calc.Exp):
+        match e:
+            case calc.ExpVar(var):
+                return var
+            case _:
+                raise NotImplementedError(f"Unsupported return expression {e}")
+
+    def compile_exp(e: calc.Exp) -> tac.Exp | list[tac.StmAssign]:
+        match e:
+            case calc.ExpVar(var):
+                return tac.ExpVar(var)
+            case calc.ExpBop(_):
+                new_stmt = []
+
+                def _compile_exp(curr: calc.Exp):
+                    match curr:
+                        case calc.ExpVar(var):
+                            return var
+                        case calc.ExpBop(left, right, bop):
+                            new_x = _compile_exp(left)
+                            new_y = _compile_exp(right)
+                            new_var = next(fresh_var)
+                            new_stmt.append(tac.StmAssign(
+                                new_var, tac.ExpBop(new_x, new_y, bop)))
+                            return new_var
+                _compile_exp(e)
+                return new_stmt
 
     def compile_stm(s: calc.Stm):
         match s:
             case calc.StmAssign(x, e):
-                y = compile_exp(e)
-                new_s = tac.StmAssign(x, tac.ExpVar(y))
-                tac_stms.append(new_s)
+                new_s = compile_exp(e)
+                match new_s:
+                    case tac.ExpVar(_):
+                        tac_stms.append(tac.StmAssign(x, new_s))
+                    case _:
+                        new_s[-1] = tac.StmAssign(x, new_s[-1].e)
+                        tac_stms.extend(new_s)
 
     for s in f.stms:
         compile_stm(s)
-    ret_var = compile_exp(f.ret)
+    ret_var = compile_return_exp(f.ret)
     return tac.Function(f.name, f.args, tac_stms, ret_var)
 
 
@@ -44,9 +73,14 @@ def translation_validation(calc_func: calc.Function, tac_func: tac.Function) -> 
     calc_cons: List[BoolRef] = calc.gen_cons_func(calc_func_ssa)
     tac_cons: List[BoolRef] = tac.gen_cons_func(tac_func_ssa)
 
+    calc_ret_var, tac_ret_var = Consts(
+        ", ".join([calc_func_ssa.ret.var, tac_func_ssa.ret]), DeclareSort("S"))
+
     solver = Solver()
 
-    raise NotImplementedError('TODO: Your code here!') 
+    solver.add(*calc_cons)
+    solver.add(*tac_cons)
+    solver.add(calc_ret_var == tac_ret_var)
     return solver
 
 
@@ -72,7 +106,11 @@ class TestTV(unittest.TestCase):
         #   _tac_f_5 = _tac_f_4;
         #   return _tac_f_5;
         # }
-        # self.assertEqual(str(tac.to_ssa_func(self.tac_func)), res)
+        tac.pp_func(self.tac_func)
+        print(str(tac.to_ssa_func(self.tac_func)))
+        self.assertEqual(str(
+            tac.to_ssa_func(self.tac_func
+                            )), res)
 
     def test_tv(self):
         solver = translation_validation(calc.sample_f, self.tac_func)

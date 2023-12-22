@@ -56,6 +56,9 @@ class Function:
     stms: List[Stm]
     ret: str
 
+    def __str__(self) -> str:
+        return _pp_func(self)
+
 ###############################################
 # pretty printer
 
@@ -92,7 +95,7 @@ def _pp_func(f: Function) -> str:
     '''
     F ::= f(x1, ..., xn){S;* return x;}
     '''
-    INDENT = "    "
+    INDENT = "\t"
     match f:
         case Function(name, args, stms, ret):
             f_name = name
