@@ -74,13 +74,12 @@ def translation_validation(calc_func: calc.Function, tac_func: tac.Function) -> 
     tac_cons: List[BoolRef] = tac.gen_cons_func(tac_func_ssa)
 
     calc_ret_var, tac_ret_var = Consts(
-        ", ".join([calc_func_ssa.ret.var, tac_func_ssa.ret]), DeclareSort("S"))
+        " ".join([calc_func_ssa.ret.var, tac_func_ssa.ret]), DeclareSort("S"))
 
     solver = Solver()
 
-    solver.add(*calc_cons)
-    solver.add(*tac_cons)
-    solver.add(calc_ret_var == tac_ret_var)
+    solver.add(
+        Not(Implies(And(*calc_cons, *tac_cons), calc_ret_var == tac_ret_var)))
     return solver
 
 

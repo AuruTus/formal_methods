@@ -159,7 +159,20 @@ def gen_cons_exp(exp: Exp) -> BoolRef:
         case ExpVar(var):
             return Const(var, DeclareSort('S'))
         case ExpBop(left, right, bop):
-            func_name = "f_" + bop
+            def _gen_cons_bop(bop: str) -> str:
+                match bop:
+                    case "+":
+                        return "add"
+                    case "-":
+                        return "minus"
+                    case "*":
+                        return "mul"
+                    case "/":
+                        return "div"
+                    case _:
+                        raise NotImplementedError(
+                            f"Unsupported binary operator {bop}")
+            func_name = "f_" + _gen_cons_bop(bop)
             left = gen_cons_exp(left)
             right = gen_cons_exp(right)
             return z3.Function(func_name,

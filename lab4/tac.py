@@ -149,7 +149,7 @@ def to_ssa_func(f: Function) -> Function:
 # constraints form TAC statements
 # Generate Z3 constraints:
 def gen_cons_exp(e: Exp | str) -> BoolRef:
-    def gen_cons_bop(op: str):
+    def gen_cons_bop(op: str) -> str:
         match op:
             case "+":
                 return "add"
