@@ -11,6 +11,7 @@ from counter import counter
 ###############################################
 # a compiler from Calc to Tac.
 def compile_func(f: calc.Function) -> tac.Function:
+    var_map = {}
     tac_stms = []
     fresh_var = counter(f"tmp_{f.name}")
 
@@ -19,7 +20,7 @@ def compile_func(f: calc.Function) -> tac.Function:
     def compile_return_exp(e: calc.Exp):
         match e:
             case calc.ExpVar(var):
-                return var
+                return var_map.get(var, var)
             case _:
                 raise NotImplementedError(f"Unsupported return expression {e}")
 
@@ -33,7 +34,7 @@ def compile_func(f: calc.Function) -> tac.Function:
                 def _compile_exp(curr: calc.Exp):
                     match curr:
                         case calc.ExpVar(var):
-                            return var
+                            return var_map.get(var, var)
                         case calc.ExpBop(left, right, bop):
                             new_x = _compile_exp(left)
                             new_y = _compile_exp(right)
@@ -52,7 +53,10 @@ def compile_func(f: calc.Function) -> tac.Function:
                     case tac.ExpVar(_):
                         tac_stms.append(tac.StmAssign(x, new_s))
                     case _:
-                        new_s[-1] = tac.StmAssign(x, new_s[-1].e)
+                        new_var = next(fresh_var)
+                        var_map[x] = new_var
+                        new_s.append(tac.StmAssign(
+                            new_var, tac.ExpVar(new_s[-1].x)))
                         tac_stms.extend(new_s)
 
     for s in f.stms:
@@ -105,8 +109,8 @@ class TestTV(unittest.TestCase):
         #   _tac_f_5 = _tac_f_4;
         #   return _tac_f_5;
         # }
-        tac.pp_func(self.tac_func)
-        print(str(tac.to_ssa_func(self.tac_func)))
+        # tac.pp_func(self.tac_func)
+        # print(str(tac.to_ssa_func(self.tac_func)))
         self.assertEqual(str(
             tac.to_ssa_func(self.tac_func
                             )), res)
