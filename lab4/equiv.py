@@ -41,4 +41,4 @@ power3 = And(_out_a_1 == multi(_in, _in), And(
     _out_a_2 == multi(_out_a_1, _in)))
 power3_new = _out_b == multi(_in, multi(_in, _in))
 
-solve(power3, power3_new, _out_a_2 == _out_b)
+solve(Implies(And(power3, power3_new), _out_a_2 == _out_b))
