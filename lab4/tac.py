@@ -212,14 +212,8 @@ if __name__ == '__main__':
     #   return z;
     # }
     pp_func(test_case)
-    assert _pp_func(test_case) == '''f(s1, s2, t1, t2){
-    a = s1 + t1;
-    b = s2 + t2;
-    c = a * b;
-    b = c * s1;
-    z = b;
-    return z;
-}'''
+    assert _pp_func(
+        test_case) == "f(s1, s2, t1, t2){\n\ta = s1 + t1;\n\tb = s2 + t2;\n\tc = a * b;\n\tb = c * s1;\n\tz = b;\n\treturn z;\n}"
 
     ssa = to_ssa_func(test_case)
     # should print:
@@ -232,14 +226,8 @@ if __name__ == '__main__':
     #   return _tac_f_4;
     # }
     pp_func(ssa)
-    assert _pp_func(ssa) == '''f(s1, s2, t1, t2){
-    _tac_f_0 = s1 + t1;
-    _tac_f_1 = s2 + t2;
-    _tac_f_2 = _tac_f_0 * _tac_f_1;
-    _tac_f_3 = _tac_f_2 * s1;
-    _tac_f_4 = _tac_f_3;
-    return _tac_f_4;
-}'''
+    assert _pp_func(
+        ssa) == "f(s1, s2, t1, t2){\n\t_tac_f_0 = s1 + t1;\n\t_tac_f_1 = s2 + t2;\n\t_tac_f_2 = _tac_f_0 * _tac_f_1;\n\t_tac_f_3 = _tac_f_2 * s1;\n\t_tac_f_4 = _tac_f_3;\n\treturn _tac_f_4;\n}"
 
     cons = gen_cons_func(ssa)
     # should has constraints:
