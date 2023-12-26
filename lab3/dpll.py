@@ -250,7 +250,7 @@ def dpll(prop: Prop) -> dict:
     #
     # feel free to add new method.
     return {
-        str(p.children()[0]) if is_not(p) else str(p): False if is_not(p) else True
+        str(p.children()[0]) if is_not(p) else str(p): not is_not(p)
         for p in reduce(
             lambda a, b: a+b,
             [list(map(lambda x: to_z3(x), ps))
