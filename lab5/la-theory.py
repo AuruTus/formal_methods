@@ -55,7 +55,11 @@ else:
 x, y = Reals('x y')
 # @Exercise 2: For the above constraints, please write down src that creating the
 # solver and checking these constraints. Make sure your src outputs "unsat".
-raise NotImplementedError('TODO: Your code here!') 
+print("=========== xrcs 2 ===============")
+solver = Solver()
+solver.add(x + y == 0.8, x + y == 0.2)
+assert solver.check() == unsat
+print("pass")
 
 
 # Besides the domain real ("Reals"), Z3 also has decent support for the
@@ -67,7 +71,14 @@ x, y = Ints('x y')
 #   { x - y = 2
 # @Exercise 3: please write src to check the above constraints, make sure
 # your src should output some like "[x = 5, y = 3]'.
-raise NotImplementedError('TODO: Your code here!') 
+print("=========== xrcs 3 ===============")
+solver = Solver()
+solver.add(x + y == 8, x - y == 2)
+res = solver.check()
+if res == sat:
+    print(solver.model())
+else:
+    print(res)
 
 
 # To this point, as you can observe, the src fragment we already wrote
@@ -115,9 +126,15 @@ print_model(res, model)
 # @exercise 4: write src to check the above constraints are satisfiable
 # domain R, but not on domain Z. You should finish your src, by calling
 # the above "check_cons()" function.
+print("=========== xrcs 4 ===============")
 x, y = Reals('x, y')
 cons = [x + y == 8, x - y == 1]
-raise NotImplementedError('TODO: Your code here!') 
+res, model = check_cons(cons)
+print_model(res, model)
+x, y = Ints('x, y')
+cons = [x + y == 8, x - y == 1]
+res, model = check_cons(cons)
+print_model(res, model)
 
 #########################################
 # 0-1 Linear Arithmetic
@@ -178,9 +195,12 @@ assert (check_zero_normal(l3))
 #   x_1*e_1 + x_2*e_2 + ... + x_n*e_n = 0
 # @exercise 5: why the above constraints can guarantee that there is
 # one 0 in the input list of integers?
-raise NotImplementedError('TODO: Your code here!') 
-
+'''
+Because if there exists an e_i not equaling 0 and x_i is just 1, the constraints (2) cannot be guaranteed.
+'''
 # Let's continue to turn the above constraints into src;
+
+
 def check_zero_la(l):
     # create a list of auxiliary variables:
     # [x_0, ..., x_{n-1}]
@@ -195,11 +215,10 @@ def check_zero_la(l):
     cons_sum = [sum(vars) == 1]
     # create the second group of constraints:
     #   x_1*e_1 + x_2*e_2 + ... + x_n*e_n = 0
-    cons_exp = []
+    cons_exp = [sum([x*e for (x, e) in zip(vars, l)]) == 0]
     # @exercise 6: fill in the missing src to generate the above constraint,
     # and store it in the "cons_exp" variable.
     # Make sure your src passes all the following unit test.
-    raise NotImplementedError('TODO: Your code here!') 
     # check these constraints:
     res, model = check_cons(cons_0_or_1 + cons_sum + cons_exp)
     if res == sat:
@@ -208,6 +227,7 @@ def check_zero_la(l):
     return False
 
 
+print("=========== xrcs 6 ===============")
 # unit test the above function:
 assert (not check_zero_la(l1))
 assert (check_zero_la(l2))
@@ -240,7 +260,7 @@ else:
 # @exercise 7: write some src to check that this non-linear constraint,
 # on two real numbers x and y, is unsat:
 #   x*x + y*y < 0
-raise NotImplementedError('TODO: Your code here!') 
+raise NotImplementedError('TODO: Your code here!')
 
 
 #########################################
@@ -267,7 +287,7 @@ raise NotImplementedError('TODO: Your code here!')
 # @exercise 8: please fill in the missing src to check the
 # satisfiability of the equation (3).
 x, p, q = Ints('x p q')
-raise NotImplementedError('TODO: Your code here!') 
+raise NotImplementedError('TODO: Your code here!')
 
 
 # this completes the part of the assignment.
