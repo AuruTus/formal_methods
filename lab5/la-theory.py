@@ -284,6 +284,28 @@ assert (count_zero_la(l3) == 2)
 assert (count_zero_la(l4) == 3)
 
 
+def random_10():
+    import random
+    return random.randint(0, 10)
+
+
+def test_long_input(len: int):
+    l = [random_10() for _ in range(0, len)]
+    import time
+    start = time.time()
+    count_zero_la(l)
+    end = time.time()
+    print(f"for input length {len}, solver costs {end - start} sec")
+
+
+# test_long_input(10)
+test_long_input(100)
+# test_long_input(1000)
+# test_long_input(1000000)
+
+print("============= pass ===============")
+
+
 #########################################
 # None-Linear arithmetic.
 
@@ -303,7 +325,12 @@ else:
 # @exercise 7: write some src to check that this non-linear constraint,
 # on two real numbers x and y, is unsat:
 #   x*x + y*y < 0
-raise NotImplementedError('TODO: Your code here!')
+
+print("=========== xrcs 7 ===============")
+x, y = Reals("x, y")
+res, model = check_cons([x*x + y*y < 0])
+assert res == unsat
+print("=========== pass ===============")
 
 
 #########################################
@@ -330,7 +357,9 @@ raise NotImplementedError('TODO: Your code here!')
 # @exercise 8: please fill in the missing src to check the
 # satisfiability of the equation (3).
 x, p, q = Ints('x p q')
-raise NotImplementedError('TODO: Your code here!')
-
-
+res, model = check_cons([x*q == p, q != 0, x*x == 2])
+if res == sat:
+    print(model)
+else:
+    print(res)
 # this completes the part of the assignment.
