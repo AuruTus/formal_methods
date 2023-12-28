@@ -235,11 +235,54 @@ assert (check_zero_la(l3))
 
 # @Challenge: please write a program to count the number of 0s in
 # a given list of integers.
+print("=========== challenge cnt zero ===============")
+
+
+def count_zero_la(l):
+    # create a list of auxiliary variables:
+    # [x_0, ..., x_{n-1}]
+    vars = [Int('x_%d' % i) for i in range(len(l))]
+    # create the first group of constraints:
+    #   all "vars" are 0-1 integers:
+    cons_0_or_1 = []
+    for i in range(len(vars)):
+        cons_0_or_1.append(Or(vars[i] == 0, vars[i] == 1))
+    # create the second group of constraints:
+    #   x_1 + x2 + ... + xn = 1
+    cons_sum = [sum(vars) == 1]
+    # create the second group of constraints:
+    #   x_1*e_1 + x_2*e_2 + ... + x_n*e_n = 0
+    cons_exp = [sum([x*e for (x, e) in zip(vars, l)]) == 0]
+    # @exercise 6: fill in the missing src to generate the above constraint,
+    # and store it in the "cons_exp" variable.
+    # Make sure your src passes all the following unit test.
+    # check these constraints:
+    count = 0
+    solver = Solver()
+    solver.add(cons_0_or_1 + cons_sum + cons_exp)
+    while solver.check() == sat:
+        m = solver.model()
+        # print(m)
+        count += 1
+        for i in range(len(l)):
+            if m.eval(vars[i]) == 1:
+                solver.add(vars[i] == 0)
+                break
+    return count
+
+
 # Sample inputs and outputs:
 #   Input:            Output:
 l1 = [1, 2, 4, 5]  # 0
 l2 = [3, 0, 8, 2]  # 1
 l3 = [4, 0, 3, 0]  # 2
+l4 = [4, 7, 0, 3, 0, 9, 0]  # 3
+
+assert (count_zero_la(l1) == 0)
+assert (count_zero_la(l2) == 1)
+assert (count_zero_la(l3) == 2)
+assert (count_zero_la(l4) == 3)
+
 
 #########################################
 # None-Linear arithmetic.
