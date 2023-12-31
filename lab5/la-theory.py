@@ -298,8 +298,11 @@ def test_long_input(len: int):
     print(f"for input length {len}, solver costs {end - start} sec")
 
 
-# test_long_input(10)
+# for input length 10, solver costs 0.02593827247619629 sec
+test_long_input(10)
+# for input length 100, solver costs 60.924185037612915 sec
 test_long_input(100)
+# OOM killed :( sadly.
 # test_long_input(1000)
 # test_long_input(1000000)
 
