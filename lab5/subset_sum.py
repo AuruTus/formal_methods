@@ -78,6 +78,9 @@ def subset_sum_la_opt(target_set: list):
 
 # dynamic programming-based (DP) solution (don't confuse DP with LP):
 def subset_sum_dp(target_set) -> bool:
+    '''
+    use cache to optimize dfs.
+    '''
     from functools import cache
 
     @cache
@@ -86,9 +89,8 @@ def subset_sum_dp(target_set) -> bool:
             return False
         if target == target_set[index - 1]:
             return True
-        if subset_sum_dp_do(target, index - 1):
-            return True
-        return subset_sum_dp_do(target - target_set[index - 1], index - 1)
+        return True if subset_sum_dp_do(target - target_set[index - 1], index - 1) \
+            else subset_sum_dp_do(target, index - 1)
 
     start = time.time()
     result = subset_sum_dp_do(0, len(target_set))
@@ -97,6 +99,9 @@ def subset_sum_dp(target_set) -> bool:
 
 
 def subset_sum_dp_opt(tartget_set) -> bool:
+    '''
+    bfs impl with hash-set to prune branches
+    '''
     def _subset_sum_dp_opt() -> bool:
         dp = {}
         queue = [(-1, 0)]
@@ -104,12 +109,14 @@ def subset_sum_dp_opt(tartget_set) -> bool:
         while len(queue) > 0:
             curr = queue.pop(0)
             for i in range(curr[0]+1, l):
+                sum = curr[1] + tartget_set[i]
+                if dp.get(sum):
+                    continue
+                if sum == 0:
+                    return True
                 queue.append((i, curr[1]))
-                if not dp.get(curr[1] + tartget_set[i]):
-                    if curr[1] + tartget_set[i] == 0:
-                        return True
-                    queue.append((i, curr[1] + tartget_set[i]))
-                    dp[curr[1] + tartget_set[i]] = True
+                queue.append((i, sum))
+                dp[sum] = True
 
         return False
 
@@ -176,18 +183,18 @@ if __name__ == '__main__':
     max_nums = 20
     large_set = gen_large_test(max_nums)
     print(subset_sum_dp(large_set))
-    print(subset_sum_dp_opt(small_set))
+    print(subset_sum_dp_opt(large_set))
     print(subset_sum_la(large_set))
     print(subset_sum_la_opt(large_set))
 
     '''
-    time used in DP: 0.001588s
+    time used in DP: 0.000006s
     True
-    time used in non-recursive DP: 0.000133s
-    False
-    time used in LA: 0.071900s
+    time used in non-recursive DP: 0.000039s
+    True
+    time used in LA: 0.038829s
     (True, [1, -1])
-    time used in LA optimized: 0.025063s
+    time used in LA optimized: 0.011110s
     (True, [1, -1])
     '''
 
@@ -195,34 +202,56 @@ if __name__ == '__main__':
     max_nums = 200
     large_set = gen_large_test(max_nums)
     print(subset_sum_dp(large_set))
-    print(subset_sum_dp_opt(small_set))
+    print(subset_sum_dp_opt(large_set))
     print(subset_sum_la(large_set))
     print(subset_sum_la_opt(large_set))
 
     '''
-    time used in DP: 0.027842s
+    time used in DP: 0.000004s
     True
-    time used in non-recursive DP: 0.000149s
-    False
-    time used in LA: 0.187291s
+    time used in non-recursive DP: 0.000094s
+    True
+    time used in LA: 0.205076s
     (True, [1, -1])
-    time used in LA optimized: 0.019695s
+    time used in LA optimized: 0.021183s
     (True, [1, -1])
     '''
 
     print("---------------max_nums = 2000-------------")
     max_nums = 2000
     large_set = gen_large_test(max_nums)
-    # print(subset_sum_dp(large_set)) # RecursionError: maximum recursion depth exceeded in comparison
-    print(subset_sum_dp_opt(small_set))
+    print(subset_sum_dp(large_set))
+    print(subset_sum_dp_opt(large_set))
     print(subset_sum_la(large_set))
     print(subset_sum_la_opt(large_set))
 
     '''
-    time used in non-recursive DP: 0.000087s
-    False
-    time used in LA: 45.825885s
+    time used in DP: 0.000005s
+    True
+    time used in non-recursive DP: 0.000648s
+    True
+    time used in LA: 44.152249s
     (True, [1, -1])
-    time used in LA optimized: 0.763517s
+    time used in LA optimized: 1.293954s
     (True, [1, -1])
     '''
+
+    print("---------------max_nums = 200000-------------")
+    max_nums = 200000
+    large_set = gen_large_test(max_nums)
+    print(subset_sum_dp(large_set))
+    print(subset_sum_dp_opt(large_set))
+    print(subset_sum_la(large_set))
+    print(subset_sum_la_opt(large_set))
+
+    '''
+    time used in DP: 0.000005s
+    True
+    time used in non-recursive DP: 0.093668s
+    True
+    Killed
+    '''
+
+    # Conclusion:
+    # I optimized the first version DP, so that it can quit much earlier with the specific test data.
+    # Thanks to DP's early pruning search tree's branches strategy, DP is much more efficient than LA.
