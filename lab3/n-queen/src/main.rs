@@ -1,16 +1,19 @@
 #![feature(generic_const_exprs)]
 
+use rayon::iter::*;
+use std::fmt::Error;
+
 #[derive(PartialEq, Clone, Copy)]
 enum Existence {
     Exist,
     None,
 }
 
-fn n_queen<const N: usize>()
+fn n_queen_task<const N: usize>(i: i32) -> i32
 where
     [(); 2 * N - 1]:,
 {
-    let mut cnt: i128 = 0;
+    let cnt = &mut 0;
     let col_m = [Existence::None; N];
     let diag_m = [Existence::None; 2 * N - 1];
     let anti_diag_m = [Existence::None; 2 * N - 1];
@@ -18,7 +21,7 @@ where
     fn _dfs<const N: usize>(
         x: i32,
         y: i32,
-        cnt: &mut i128,
+        cnt: &mut i32,
         mut col_m: [Existence; N],
         mut diag_m: [Existence; 2 * N - 1],
         mut anti_diag_m: [Existence; 2 * N - 1],
@@ -52,15 +55,30 @@ where
         col_m[_y] = Existence::None;
     }
 
-    for y in 0..N as i32 {
-        _dfs(0, y, &mut cnt, col_m, diag_m, anti_diag_m);
-    }
+    _dfs(0, i, cnt, col_m, diag_m, anti_diag_m);
 
-    println!("{cnt}");
+    *cnt
+}
+
+fn n_queen<const N: usize>() -> i32
+where
+    [(); 2 * N - 1]:,
+{
+    (0..N)
+        .into_par_iter()
+        .map(|i| n_queen_task::<N>(i as i32))
+        .sum()
+}
+
+macro_rules! test_n_queen {
+    ($time:expr) => {
+        let res = n_queen::<$time>();
+        println!("{res}");
+    };
 }
 
 fn main() {
+    test_n_queen!(16);
     // n_queen::<10>();
-    n_queen::<16>();
     // n_queen::<32>();
 }
