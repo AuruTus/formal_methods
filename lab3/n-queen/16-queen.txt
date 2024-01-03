@@ -1,5 +1,5 @@
 14772512
 
-real	5m2.916s
-user	4m29.360s
-sys	0m0.349s
+real	0m26.556s
+user	3m19.917s
+sys	0m0.509s
