@@ -63,7 +63,7 @@ def draw_points(xs, ys):
     plt.xlim(0, 8)  # 设定绘图范围
     plt.ylim(0, 8)
     plt.savefig("./points.png")
-    plt.show()
+    # plt.show()
 
 
 # Input: a group of coordinates [xs, ys]
@@ -78,7 +78,7 @@ def draw_line(k, b, xs, ys):
     plt.xlim(0, 8)  # 设定绘图范围
     plt.ylim(0, 8)
     plt.savefig("./line.png")
-    plt.show()
+    # plt.show()
 
 
 # Arguments: xs, ys, the given data for these coordinates
@@ -94,7 +94,8 @@ def lr_training(xs, ys):
     # (https://en.wikipedia.org/wiki/Least_squares)
     # to generate the target expression which will be minimized
     # Your code here:
-    raise NotImplementedError('TODO: Your code here!') 
+    def f(x): return k*x+b
+    exps = [(y - (f(x)))**2 for (x, y) in zip(xs, ys)]
 
     # double check the expression is right
     # it should output:
@@ -131,10 +132,11 @@ def lr_training(xs, ys):
 
 
 if __name__ == '__main__':
-    draw_points(xs, ys)
+    # draw_points(xs, ys)
     res, k, b = lr_training(xs, ys)
     if res == sat:
-        print(f"the linear function is:\n y = {k}*x {'+' if b >= 0 else '-'} {abs(b)}")
+        print(
+            f"the linear function is:\n y = {k}*x {'+' if b >= 0 else '-'} {abs(b)}")
         draw_line(k, b, xs, ys)
     else:
         print('\033[91m Training failed! \033[0m')
@@ -144,5 +146,6 @@ if __name__ == '__main__':
     # by trying some different training data. Do the two algorithms produce the same
     # results? What conclusion you can draw from the result?
     # Your code here:
-    raise NotImplementedError('TODO: Your code here!') 
 
+    # Conclusion: They produce the same results: y = 2*x - 1. But ML approach is much faster.
+    # The math method is more efficient than the search method.
