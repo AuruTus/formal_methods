@@ -1,7 +1,7 @@
 """ Knapsack problem
 
 
-The knapsack problem is a typical optimization problem，which has been
+The knapsack problem is a typical optimization problem, which has been
 studied for hundred of years. The problem is: given a set of items, each
 item has a weight and a value, determine the number of items such that the
 total weight is less than a given limit and the total value is as large
@@ -61,7 +61,8 @@ def zero_one_knapsack_dp(weights, values, cap):
 
     start = time.time()
     result = knapsack_dp_do(cap, len(weights))
-    print(f"zero_one_knapsack_dp solve {len(weights)} items by time {(time.time() - start):.6f}s")
+    print(
+        f"zero_one_knapsack_dp solve {len(weights)} items by time {(time.time() - start):.6f}s")
     return result
 
 
@@ -84,11 +85,13 @@ def zero_one_knapsack_lp(weights, values, cap, verbose=False):
     # and the the target
     #   \sum_i values[i] * flags[i]
     # Your code here:
-    raise NotImplementedError('TODO: Your code here!') 
+    solver.add(sum([f*w for (f, w) in zip(flags, weights)]) <= cap)
+    solver.maximize(sum([f*v for (f, v) in zip(flags, values)]))
 
     start = time.time()
     result = solver.check()
-    print(f"zero_one_knapsack_lp solve {len(weights)} items by time {(time.time() - start):.6f}s")
+    print(
+        f"zero_one_knapsack_lp solve {len(weights)} items by time {(time.time() - start):.6f}s")
 
     if result == sat:
         model = solver.model()
@@ -111,16 +114,21 @@ def complete_knapsack_lp(weights, values, cap, verbose=False):
 
     # @Exercise 16: solve the complete knapsack problem by using LP
     # note that flags[i] will be a integer and flags[i] >= 0
+    flags = [Int(f"x_{i}") for i in range(len(weights))]
+    for flag in flags:
+        solver.add(flag >= 0)
     # construct the constraint
     #   \sum_i weights[i] * flags[i] <= cap
     # and the the target
     #   \sum_i values[i] * flags[i]
     # Your src here:
-    raise NotImplementedError('TODO: Your code here!') 
+    solver.add(sum([f*w for (f, w) in zip(flags, weights)]) <= cap)
+    solver.maximize(sum([f*v for (f, v) in zip(flags, values)]))
 
     start = time.time()
     result = solver.check()
-    print(f"complete_knapsack_lp solve {len(weights)} items by time {(time.time() - start):.6f}s")
+    print(
+        f"complete_knapsack_lp solve {len(weights)} items by time {(time.time() - start):.6f}s")
 
     if result == sat:
         model = solver.model()
@@ -130,9 +138,9 @@ def complete_knapsack_lp(weights, values, cap, verbose=False):
             print("\n".join([f"Index: {index}, Weight: {weights[index]}, Value: {values[index]}, Amount: {model[flag]}"
                              for index, flag in enumerate(flags) if model[flag].as_long() > 0]))
         return True, sum([values[index] * model[flag].as_long() for index, flag in enumerate(flags)])
-    
+
     return False, result
-   
+
 
 def get_large_test():
     # this test data is fetched from:
@@ -154,12 +162,12 @@ class TestKnapsack(unittest.TestCase):
         W = [4, 6, 2, 2, 5, 1]
         V = [8, 10, 6, 3, 7, 2]
         C = 12
-        
+
         res_dp = zero_one_knapsack_dp(W, V, C)
         res_lp = zero_one_knapsack_lp(W, V, C, verbose=True)
-        
+
         self.assertEqual(res_dp, res_lp[1])
-        
+
     def test_zero_one_knapsack_2(self):
         W = [23, 26, 20, 18, 32, 27, 29, 26, 30, 27]
         V = [505, 352, 458, 220, 354, 414, 498, 545, 473, 543]
@@ -167,27 +175,32 @@ class TestKnapsack(unittest.TestCase):
 
         res_dp = zero_one_knapsack_dp(W, V, C)
         res_lp = zero_one_knapsack_lp(W, V, C, verbose=True)
-        
+
         self.assertEqual(res_dp, res_lp[1])
-        
+
     def test_complete_knapsack(self):
         W = [23, 26, 20, 18, 32, 27, 29, 26, 30, 27]
         V = [505, 352, 458, 220, 354, 414, 498, 545, 473, 543]
         C = 133
-        
+
         res_lp = complete_knapsack_lp(W, V, C, verbose=True)
         self.assertEqual(res_lp[1], 2936)
-    
+
     def test_large_case(self):
         W, V = get_large_test()
         C = 6404180
-        
+
         # @Exercise 17: compare the efficiency of the DP and the
         # LP algorithm, by running your program on a larger data.
         # what's your observation? What conclusion you can draw from these data?
         # Your code here:
-        raise NotImplementedError('TODO: Your code here!') 
-        
-        
+        res_dp = zero_one_knapsack_dp(W, V, C)
+        res_lp = zero_one_knapsack_lp(W, V, C, verbose=True)
+
+        self.assertEqual(res_dp, res_lp[1])
+        # The dp way is actually a dfs on a binary tree without any caching or pruning optimization, so it
+        # has O(2^n) time complexity. But its still faster than lp method. BTW, both method will be OOM killed
+
+
 if __name__ == '__main__':
     unittest.main()
