@@ -49,7 +49,12 @@ def lp_exercise():
     #   x + y + z
     # by using LP in Z3
     # Your src here:
-    raise NotImplementedError('TODO: Your code here!') 
+    x, y, z = Reals("x y z")
+    cons = [x - y >= 2.1, x + z <= 5.5, y - z <= 1.1]
+    opt.add(cons)
+    opt.maximize(x + y + z)
+    if opt.check() == sat:
+        print(opt.model())
 
 
 if __name__ == '__main__':
